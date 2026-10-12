@@ -18,6 +18,8 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Choice**. Required: yes
 - Excel column: `Class Year`
 - Options:
+  - 2027
+  - 2028
   - 2029
   - 2030
 
@@ -25,7 +27,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Text**. Required: yes
 - Excel column: `Squadron`
 
-### 5. Coaches (29ers): what can you help with? Coachees (30ers): what do you want help with?
+### 5. If you're coaching: what can you help with? If you're being coached: what do you want help with?
 - Type: **Checkbox (pick up to 3)**. Required: yes
 - Excel column: `Coaching Focus`
 - Options:
@@ -40,7 +42,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Time management
   - Wellness & balance
 
-### 6. Major (30ers: majors you're considering)
+### 6. Major (if undeclared: majors you're considering)
 - Type: **Checkbox (pick up to 3)**. Required: yes
 - Excel column: `Major`
 - Options:

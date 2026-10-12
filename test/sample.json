@@ -20,8 +20,8 @@
  "rows": [
   [
    "Alex Nguyen",
-   "C29Alex.Nguyen@example.com",
-   "2029",
+   "C28Alex.Nguyen@example.com",
+   "2028",
    "21",
    "Navigating cadet life;",
    "Astronautical Engineering;Behavioral Sciences;Space Operations;",
@@ -37,9 +37,9 @@
    ""
   ],
   [
-   "Jordan Patel",
-   "C29Jordan.Patel@example.com",
-   "2029",
+   "Jordan Johnson",
+   "C28Jordan.Johnson@example.com",
+   "2028",
    "37",
    "[\"Navigating cadet life\", \"Academics & study habits\", \"Grad school planning\"]",
    "[\"Management\"]",
@@ -55,9 +55,9 @@
    ""
   ],
   [
-   "Sam Lopez",
-   "C29Sam.Lopez@example.com",
-   "2029",
+   "Sam Wilson",
+   "C28Sam.Wilson@example.com",
+   "2028",
    "38",
    "Research opportunities;AF/SF career planning;",
    "Political Science;",
@@ -73,9 +73,9 @@
    ""
   ],
   [
-   "Riley Martinez",
-   "C29Riley.Martinez@example.com",
-   "2029",
+   "Riley Smith",
+   "C28Riley.Smith@example.com",
+   "2028",
    "23",
    "[\"Leadership & military training\", \"Wellness & balance\", \"Choosing a major\"]",
    "[\"Data Science\"]",
@@ -91,8 +91,8 @@
    ""
   ],
   [
-   "Taylor Thomas",
-   "C29Taylor.Thomas@example.com",
+   "Taylor Lopez",
+   "C29Taylor.Lopez@example.com",
    "2029",
    "29",
    "Time management;AF/SF career planning;",
@@ -109,8 +109,8 @@
    ""
   ],
   [
-   "Morgan Smith",
-   "C29Morgan.Smith@example.com",
+   "Morgan Anderson",
+   "C29Morgan.Anderson@example.com",
    "2029",
    "35",
    "[\"Wellness & balance\", \"Research opportunities\"]",
@@ -127,8 +127,8 @@
    ""
   ],
   [
-   "Casey Kim",
-   "C29Casey.Kim@example.com",
+   "Casey Garcia",
+   "C29Casey.Garcia@example.com",
    "2029",
    "10",
    "Choosing a major;Research opportunities;Academics & study habits;",
@@ -163,8 +163,8 @@
    ""
   ],
   [
-   "Avery Wilson",
-   "C29Avery.Wilson@example.com",
+   "Avery Thomas",
+   "C29Avery.Thomas@example.com",
    "2029",
    "32",
    "Academics & study habits;Wellness & balance;",
@@ -181,8 +181,8 @@
    ""
   ],
   [
-   "Quinn Moore",
-   "C29Quinn.Moore@example.com",
+   "Quinn Patel",
+   "C29Quinn.Patel@example.com",
    "2029",
    "25",
    "[\"Grad school planning\", \"Leadership & military training\", \"Fellowships & scholarships\"]",
@@ -199,9 +199,9 @@
    ""
   ],
   [
-   "Drew Garcia",
-   "C30Drew.Garcia@example.com",
-   "2030",
+   "Drew Davis",
+   "C29Drew.Davis@example.com",
+   "2029",
    "7",
    "Fellowships & scholarships;Navigating cadet life;Grad school planning;",
    "Aeronautical Engineering;",
@@ -217,9 +217,9 @@
    ""
   ],
   [
-   "Reese Johnson",
-   "C30Reese.Johnson@example.com",
-   "2030",
+   "Reese Moore",
+   "C29Reese.Moore@example.com",
+   "2029",
    "1",
    "[\"Fellowships & scholarships\"]",
    "[\"Humanities\"]",
@@ -235,9 +235,9 @@
    ""
   ],
   [
-   "Skyler Davis",
-   "C30Skyler.Davis@example.com",
-   "2030",
+   "Skyler Kim",
+   "C29Skyler.Kim@example.com",
+   "2029",
    "35",
    "Time management;Grad school planning;",
    "Legal Studies;Undecided;Data Science;",
@@ -253,9 +253,9 @@
    ""
   ],
   [
-   "Parker Anderson",
-   "C30Parker.Anderson@example.com",
-   "2030",
+   "Parker Martinez",
+   "C29Parker.Martinez@example.com",
+   "2029",
    "15",
    "[\"Choosing a major\", \"Navigating cadet life\", \"Leadership & military training\"]",
    "[\"Military & Strategic Studies\"]",
@@ -289,8 +289,8 @@
    ""
   ],
   [
-   "Emerson Patel",
-   "C30Emerson.Patel@example.com",
+   "Emerson Johnson",
+   "C30Emerson.Johnson@example.com",
    "2030",
    "15",
    "[\"AF/SF career planning\"]",
@@ -307,8 +307,8 @@
    ""
   ],
   [
-   "Hayden Lopez",
-   "C30Hayden.Lopez@example.com",
+   "Hayden Wilson",
+   "C30Hayden.Wilson@example.com",
    "2030",
    "23",
    "AF/SF career planning;",
@@ -325,8 +325,8 @@
    ""
   ],
   [
-   "Kendall Martinez",
-   "C30Kendall.Martinez@example.com",
+   "Kendall Smith",
+   "C30Kendall.Smith@example.com",
    "2030",
    "1",
    "[\"AF/SF career planning\"]",
@@ -343,8 +343,8 @@
    ""
   ],
   [
-   "Logan Thomas",
-   "C30Logan.Thomas@example.com",
+   "Logan Lopez",
+   "C30Logan.Lopez@example.com",
    "2030",
    "14",
    "Fellowships & scholarships;Academics & study habits;",
@@ -361,8 +361,8 @@
    ""
   ],
   [
-   "Blake Smith",
-   "C30Blake.Smith@example.com",
+   "Blake Anderson",
+   "C30Blake.Anderson@example.com",
    "2030",
    "21",
    "[\"Leadership & military training\", \"Fellowships & scholarships\", \"AF/SF career planning\"]",
@@ -379,8 +379,8 @@
    ""
   ],
   [
-   "Cameron Kim",
-   "C30Cameron.Kim@example.com",
+   "Cameron Garcia",
+   "C30Cameron.Garcia@example.com",
    "2030",
    "2",
    "Time management;Grad school planning;Leadership & military training;",
@@ -415,8 +415,8 @@
    ""
   ],
   [
-   "Elliot Wilson",
-   "C30Elliot.Wilson@example.com",
+   "Elliot Thomas",
+   "C30Elliot.Thomas@example.com",
    "2030",
    "2",
    "Leadership & military training;Choosing a major;",
@@ -433,8 +433,8 @@
    ""
   ],
   [
-   "Finley Moore",
-   "C30Finley.Moore@example.com",
+   "Finley Patel",
+   "C30Finley.Patel@example.com",
    "2030",
    "29",
    "[\"AF/SF career planning\", \"Fellowships & scholarships\"]",
@@ -448,6 +448,78 @@
    "I'm interested in quantum sensing and leadership psychology under stress.",
    "[\"Cooking\"]",
    "[\"Ethics in technology\", \"Mental health\"]",
+   ""
+  ],
+  [
+   "Alex Martinez",
+   "C30Alex.Martinez@example.com",
+   "2030",
+   "18",
+   "Academics & study habits;",
+   "Economics;Meteorology;Chemistry;",
+   "Nuclear Weapons & Strategy;",
+   "Master's right after graduation;Gates Cambridge;",
+   "Missiles;",
+   "Career military;Law;",
+   "Cadet leadership positions;Publishing research;Ops Air Force;",
+   "Aerospace / hypersonics;AI / machine learning;History;",
+   "I'm interested in quantum sensing and cyber defense of space systems.",
+   "Skiing / snowboarding;Writing;Gaming;",
+   "Mentorship / first-gen students;",
+   ""
+  ],
+  [
+   "Jordan Nguyen",
+   "C30Jordan.Nguyen@example.com",
+   "2030",
+   "9",
+   "[\"Leadership & military training\"]",
+   "[\"Electrical & Computer Engineering\", \"Economics\"]",
+   "[\"Nuclear Weapons & Strategy\", \"Global Logistics\"]",
+   "[\"Medical school\", \"Schwarzman\", \"Mitchell\"]",
+   "[\"Developmental Engineer\", \"Acquisitions / Program Management\", \"Medical\"]",
+   "[\"Law\", \"Career military\", \"Industry / tech\"]",
+   "[\"Study abroad / exchange semester\", \"Internships\", \"Ops Air Force\"]",
+   "[\"Education\", \"Quantum / physics\", \"Space\"]",
+   "I'm interested in cyber defense of space systems and human performance and sleep.",
+   "[\"Volunteering\", \"Skiing / snowboarding\"]",
+   "[\"Climate\", \"Economic opportunity\", \"Education access\"]",
+   ""
+  ],
+  [
+   "Sam Johnson",
+   "C30Sam.Johnson@example.com",
+   "2030",
+   "12",
+   "Time management;Choosing a major;",
+   "Cyber Science;English;",
+   "Space Studies;Foreign language;",
+   "Not planning grad school;Mitchell;Not sure yet;",
+   "JAG;Intelligence;",
+   "Entrepreneurship;Academia / research;",
+   "Competition teams / clubs;",
+   "History;Aerospace / hypersonics;",
+   "I'm interested in renewable energy on bases and great power competition.",
+   "Music;Climbing;Skiing / snowboarding;",
+   "Community service;",
+   ""
+  ],
+  [
+   "Riley Wilson",
+   "C30Riley.Wilson@example.com",
+   "2030",
+   "26",
+   "[\"Leadership & military training\", \"Navigating cadet life\", \"AF/SF career planning\"]",
+   "[\"Chemistry\"]",
+   "[\"Other\"]",
+   "[\"Not sure yet\", \"Not planning grad school\", \"Hertz / NSF GRFP\"]",
+   "[\"Medical\", \"Pilot\", \"RPA Pilot\"]",
+   "[\"Not sure yet\", \"Government / policy\"]",
+   "[\"Internships\"]",
+   "[\"Cybersecurity\"]",
+   "I'm interested in machine learning for satellite imagery and great power competition.",
+   "[\"Hiking / outdoors\", \"Travel\", \"Lifting\"]",
+   "[\"Mental health\", \"Economic opportunity\", \"Veterans\"]",
    ""
   ]
  ]

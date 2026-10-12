@@ -14,16 +14,16 @@ OUT = Path(__file__).parent
 QUESTIONS = [
     ("Name", "Full name", "Text", None, False),
     ("Email", "USAFA email", "Text", None, False),
-    ("Class Year", "Class year", "Choice", ["2029", "2030"], False),
+    ("Class Year", "Class year", "Choice", ["2027", "2028", "2029", "2030"], False),
     ("Squadron", "Squadron (number)", "Text", None, False),
     ("Coaching Focus",
-     "Coaches (29ers): what can you help with? Coachees (30ers): what do you want help with?",
+     "If you're coaching: what can you help with? If you're being coached: what do you want help with?",
      "Checkbox (pick up to 3)",
      ["Academics & study habits", "Choosing a major", "Fellowships & scholarships",
       "Grad school planning", "AF/SF career planning", "Research opportunities",
       "Navigating cadet life", "Leadership & military training", "Time management",
       "Wellness & balance"], True),
-    ("Major", "Major (30ers: majors you're considering)", "Checkbox (pick up to 3)",
+    ("Major", "Major (if undeclared: majors you're considering)", "Checkbox (pick up to 3)",
      ["Aeronautical Engineering", "Astronautical Engineering", "Behavioral Sciences",
       "Biology", "Chemistry", "Civil Engineering", "Computer Science", "Cyber Science",
       "Data Science", "Economics", "Electrical & Computer Engineering", "English",
@@ -118,7 +118,7 @@ def make_workbook(path, rows):
     wb.save(path)
 
 
-def sample_rows(n29=10, n30=14, seed=7):
+def sample_rows(n28=4, n29=10, n30=14, seed=7):
     rnd = random.Random(seed)
     opts = {q[0]: q[3] for q in QUESTIONS if q[3]}
     first = ["Alex", "Jordan", "Sam", "Riley", "Taylor", "Morgan", "Casey", "Jamie", "Avery",
@@ -132,9 +132,9 @@ def sample_rows(n29=10, n30=14, seed=7):
               "quantum sensing", "cyber defense of space systems", "great power competition",
               "leadership psychology under stress", "renewable energy on bases"]
     rows = []
-    for i in range(n29 + n30):
-        cls = "2029" if i < n29 else "2030"
-        name = f"{first[i % len(first)]} {last[(i * 3) % len(last)]}"
+    for i in range(n28 + n29 + n30):
+        cls = "2028" if i < n28 else "2029" if i < n28 + n29 else "2030"
+        name = f"{first[i % len(first)]} {last[(i * 5 + i // len(first)) % len(last)]}"
         email = f"C{cls[2:]}{name.replace(' ', '.')}@example.com"
         row = []
         for h in HEADERS:

@@ -6,8 +6,8 @@
   // header: short column name (Power Automate workbook)
   // question: the Microsoft Forms question text (Forms "Open in Excel" export)
   const FIELDS = [
-    { key: "focus", header: "Coaching Focus", question: "Coaches (29ers): what can you help with?", label: "Coaching focus", weight: 3, kind: "list" },
-    { key: "major", header: "Major", question: "Major (30ers: majors you're considering)", label: "Major", weight: 3, kind: "list" },
+    { key: "focus", header: "Coaching Focus", question: "If you're coaching: what can you help with?", label: "Coaching focus", weight: 3, kind: "list" },
+    { key: "major", header: "Major", question: "Major (if undeclared: majors you're considering)", label: "Major", weight: 3, kind: "list" },
     { key: "research", header: "Research Areas", question: "Research areas you're interested in", label: "Research", weight: 3, kind: "list" },
     { key: "grad", header: "Grad School Plans", question: "Grad school / fellowships you're interested in", label: "Grad school", weight: 2, kind: "list" },
     { key: "career", header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", label: "AF/SF career", weight: 2, kind: "list" },
@@ -135,8 +135,14 @@
     return ans;
   }
 
-  // rows: array of arrays, headers: array of strings
-  function readPeople(headers, rows, opts) {
+  // Class year as a short label: "2029", or the raw answer if no year in it.
+  function classOf(raw) {
+    const m = String(raw == null ? "" : raw).match(/20\d\d/);
+    return m ? m[0] : String(raw == null ? "" : raw).trim();
+  }
+
+  // rows: array of arrays, headers: array of strings. Returns everyone, deduped by email (last wins).
+  function readPeople(headers, rows) {
     const cols = {
       name: findColumn(headers, ID_COLS.name),
       email: findColumn(headers, ID_COLS.email),
@@ -149,20 +155,26 @@
     if (cols.classYear < 0) missing.push("Class year");
     FIELDS.forEach((f, k) => { if (fieldCols[k] < 0) missing.push(f.header); });
 
-    const coaches = new Map(), coachees = new Map();
+    const byKey = new Map();
     for (const row of rows) {
       const get = (i) => (i < 0 ? "" : row[i] == null ? "" : String(row[i]));
-      const name = get(cols.name).trim(), email = get(cols.email).trim(), cls = get(cols.classYear);
+      const name = get(cols.name).trim(), email = get(cols.email).trim();
       if (!name && !email) continue;
-      const person = {
-        name, email, classYear: cls,
+      byKey.set((email || name).toLowerCase(), {
+        name, email, cls: classOf(get(cols.classYear)) || "Unknown",
         answers: FIELDS.map((f, k) => (f.kind === "text" ? keywords(get(fieldCols[k])) : parseList(get(fieldCols[k])))),
-      };
-      const key = (email || name).toLowerCase();
-      if (cls.includes(opts.coachClass)) coaches.set(key, person);
-      else if (cls.includes(opts.coacheeClass)) coachees.set(key, person);
+      });
     }
-    return { coaches: [...coaches.values()], coachees: [...coachees.values()], missing };
+    return { people: [...byKey.values()], missing };
+  }
+
+  // Teams deep link: opens a 1:1 chat with `email`, message pre-typed (sender just hits Send).
+  function teamsLink(email, message) {
+    return "https://teams.microsoft.com/l/chat/0/0?users=" + encodeURIComponent(email) + "&message=" + encodeURIComponent(message);
+  }
+
+  function fillTemplate(tpl, v) {
+    return tpl.replace(/\{(\w+)\}/g, (all, k) => (k in v ? v[k] : all));
   }
 
   function match(coaches, coachees, weights) {
@@ -177,7 +189,7 @@
     return { score, cap, assignment: coachees.map((_, i) => slotCoach[a[i]]) };
   }
 
-  const api = { FIELDS, parseList, keywords, jaccard, similarity, shared, hungarian, readPeople, match, findColumn };
+  const api = { FIELDS, parseList, keywords, jaccard, similarity, shared, hungarian, readPeople, match, findColumn, classOf, teamsLink, fillTemplate };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Matcher = api;
 })(this);
