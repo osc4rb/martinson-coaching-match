@@ -6,7 +6,7 @@
   // header: short column name (Power Automate workbook)
   // question: the Microsoft Forms question text (Forms "Open in Excel" export)
   const FIELDS = [
-    { key: "focus", header: "Coaching Focus", question: "If you're coaching: what can you help with?", label: "Coaching focus", weight: 3, kind: "list" },
+    { key: "focus", header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", label: "Coaching focus", weight: 3, kind: "list" },
     { key: "major", header: "Major", question: "Major (if undeclared: majors you're considering)", label: "Major", weight: 3, kind: "list" },
     { key: "research", header: "Research Areas", question: "Research areas you're interested in", label: "Research", weight: 3, kind: "list" },
     { key: "grad", header: "Grad School Plans", question: "Grad school / fellowships you're interested in", label: "Grad school", weight: 2, kind: "list" },
@@ -14,7 +14,6 @@
     { key: "fun", header: "Fun", question: "What do you do for fun?", label: "For fun", weight: 2, kind: "list" },
     { key: "future", header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", label: "Future path", weight: 1.5, kind: "list" },
     { key: "opps", header: "Opportunities", question: "Opportunities you want to pursue at USAFA", label: "Opportunities", weight: 1.5, kind: "list" },
-    { key: "issues", header: "Issues", question: "Issues you care about", label: "Issues", weight: 1.5, kind: "list" },
     { key: "text", header: "Research Interests", question: "In a sentence or two, what topics are you curious about?", label: "Research keywords", weight: 1.5, kind: "text" },
     { key: "minor", header: "Minor", question: "Minor(s) you have or are considering", label: "Minor", weight: 1, kind: "list" },
   ];

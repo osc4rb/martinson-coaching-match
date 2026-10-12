@@ -39,7 +39,6 @@ const FIELDS: FieldConfig[] = [
   { header: "Fun", label: "For fun", weight: 2, kind: "list" },
   { header: "Future Path", label: "Future path", weight: 1.5, kind: "list" },
   { header: "Opportunities", label: "Opportunities", weight: 1.5, kind: "list" },
-  { header: "Issues", label: "Issues", weight: 1.5, kind: "list" },
   { header: "Research Interests", label: "Research keywords", weight: 1.5, kind: "text" },
   { header: "Minor", label: "Minor", weight: 1, kind: "list" },
 ];
