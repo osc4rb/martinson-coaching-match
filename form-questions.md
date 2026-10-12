@@ -27,7 +27,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Text**. Required: yes
 - Excel column: `Squadron`
 
-### 5. If you're coaching: what can you help with? If you're being coached: what do you want help with?
+### 5. What do you want help with, or want your coach to focus on? (pick up to 3)
 - Type: **Checkbox (pick up to 3)**. Required: yes
 - Excel column: `Coaching Focus`
 - Options:
@@ -209,22 +209,6 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Film / TV
   - Chess / board games
 
-### 15. Issues you care about
-- Type: **Checkbox**. Required: yes
-- Excel column: `Issues`
-- Options:
-  - Mental health
-  - Education access
-  - Veterans
-  - Climate
-  - Ethics in technology
-  - Global security
-  - Community service
-  - Healthcare
-  - Mentorship / first-gen students
-  - Faith & values
-  - Economic opportunity
-
-### 16. Anything else your coach/coachee should know? (not used for matching)  _(not scored)_
+### 15. Anything else your coach/coachee should know? (not used for matching)  _(not scored)_
 - Type: **Long text**. Required: no
 - Excel column: `Anything Else`

@@ -2,7 +2,7 @@
 const M = require("../site/matcher.js");
 const headers = ["Id", "Start time", "Completion time", "Email", "Name", "Last modified time",
   "Class year",
-  "If you're coaching: what can you help with? If you're being coached: what do you want help with? (pick up to 3)",
+  "What do you want help with, or want your coach to focus on? (pick up to 3)",
   "Major (if undeclared: majors you're considering) (pick up to 3)",
   "Minor(s) you have or are considering",
   "Grad school / fellowships you're interested in",
@@ -12,9 +12,8 @@ const headers = ["Id", "Start time", "Completion time", "Email", "Name", "Last m
   "Research areas you're interested in (pick up to 4)",
   "In a sentence or two, what topics are you curious about?",
   "What do you do for fun?",
-  "Issues you care about",
   "Anything else your coach/coachee should know? (optional, not used for matching)"];
-const row = (email, name, cls, major, fun) => ["1", "", "", email, name, "", cls, "Grad school planning;", major + ";", "None / undecided;", "Rhodes;", "Cyber;", "Industry / tech;", "Internships;", "AI / machine learning;", "drone swarms and AI", fun + ";", "Veterans;", ""];
+const row = (email, name, cls, major, fun) => ["1", "", "", email, name, "", cls, "Grad school planning;", major + ";", "None / undecided;", "Rhodes;", "Cyber;", "Industry / tech;", "Internships;", "AI / machine learning;", "drone swarms and AI", fun + ";", ""];
 const { people, missing } = M.readPeople(headers, [
   row("a@x", "Coach A", "2029", "Computer Science", "Running"),
   row("b@x", "Coach B", "2028", "History", "Chess / board games"),
