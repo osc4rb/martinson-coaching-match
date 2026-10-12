@@ -2,7 +2,9 @@
 const M = require("../site/matcher.js");
 const data = require("./sample.json");
 const weights = Object.fromEntries(M.FIELDS.map((f) => [f.key, f.weight]));
-const { coaches, coachees, missing } = M.readPeople(data.headers, data.rows, { coachClass: "2029", coacheeClass: "2030" });
+const { people, missing } = M.readPeople(data.headers, data.rows);
+const coaches = people.filter((p) => p.cls === "2028" || p.cls === "2029"), coachees = people.filter((p) => p.cls === "2030");
+console.log("teams link:", M.teamsLink("a@b.com", "Hi there, & more").slice(0, 90));
 console.log("coaches", coaches.length, "coachees", coachees.length, "missing", missing);
 const r = M.match(coaches, coachees, weights);
 const load = {}; r.assignment.forEach((j) => (load[j] = (load[j] || 0) + 1));

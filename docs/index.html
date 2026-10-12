@@ -96,6 +96,26 @@ select { font: .9rem var(--body); padding: 6px 8px; border-radius: 6px; border: 
 .unmatched { color: var(--muted); font-size: .9rem; }
 footer { color: var(--muted); font-size: .82rem; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+select { font: .9rem var(--body); padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); max-width: min(260px, 100%); }
+.roles { display: grid; }
+.role { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.role:last-child { border-bottom: 0; }
+.role b { font: 600 1.15rem var(--display); }
+.role small { color: var(--muted); margin-left: 8px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label { padding: 7px 14px; font: 600 .85rem var(--body); cursor: pointer; color: var(--muted); border-left: 1px solid var(--line); }
+.seg label:first-of-type { border-left: 0; }
+.seg input:checked + label { background: var(--accent); color: var(--accent-ink); }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: -2px; }
+textarea { width: 100%; min-height: 96px; font: .92rem/1.5 var(--body); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); resize: vertical; }
+.hint { font-size: .82rem; color: var(--muted); margin: 6px 0 0; }
+.hint code { font: .8rem var(--mono); color: var(--accent); }
+a.teams { display: inline-block; margin-top: 8px; font: 600 .82rem var(--body); color: var(--accent); text-decoration: none; }
+a.teams:hover { text-decoration: underline; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px; }
+.two h2 { margin-bottom: 6px; }
+@media (max-width: 820px) { .two { grid-template-columns: minmax(0, 1fr); } }
 </style>
 </head>
 <body>
@@ -103,7 +123,7 @@ footer { color: var(--muted); font-size: .82rem; }
   <header>
     <div class="eyebrow">USAFA · Martinson Honors Program</div>
     <h1>Martinson Coaching Match</h1>
-    <p class="lede">Pairs Class of 2029 coaches with Class of 2030 coachees for the semester, using their survey answers. It finds the best pairing for the whole group, gives every coach at least one coachee, and keeps loads even.</p>
+    <p class="lede">Pairs coaches with coachees for the semester from their survey answers. Pick which classes coach and which get coached. It finds the best pairing for the whole group, gives every coach at least one coachee, and keeps loads even.</p>
   </header>
 
   <section class="panel load" aria-label="Load responses">
@@ -120,9 +140,21 @@ footer { color: var(--muted); font-size: .82rem; }
 
   <div class="notice" id="notice" hidden></div>
 
+  <div class="two">
+    <section class="panel" aria-label="Class roles">
+      <h2>Who coaches whom</h2>
+      <div class="roles" id="roles"></div>
+    </section>
+    <section class="panel" aria-label="Intro message">
+      <h2>Intro message</h2>
+      <p class="hint" style="margin:0 0 8px">Each coach gets a Teams link that opens a chat with their coachee with this already typed. Placeholders: <code>{coach}</code> <code>{coachee}</code> <code>{coachFirst}</code> <code>{coacheeFirst}</code> <code>{shared}</code></p>
+      <textarea id="template" aria-label="Intro message template"></textarea>
+    </section>
+  </div>
+
   <section class="stats" aria-label="Summary">
-    <div class="stat"><b id="s-coaches">0</b><span>Coaches · 2029</span></div>
-    <div class="stat"><b id="s-coachees">0</b><span>Coachees · 2030</span></div>
+    <div class="stat"><b id="s-coaches">0</b><span id="l-coaches">Coaches</span></div>
+    <div class="stat"><b id="s-coachees">0</b><span id="l-coachees">Coachees</span></div>
     <div class="stat"><b id="s-load">0</b><span>Most coachees per coach</span></div>
     <div class="stat"><b id="s-avg">0</b><span>Average match score</span></div>
   </section>
@@ -130,7 +162,7 @@ footer { color: var(--muted); font-size: .82rem; }
   <details class="panel weights">
     <summary>How much each question counts</summary>
     <div class="wgrid" id="weights"></div>
-    <p class="privacy" style="margin:12px 0 0">Coach class: <input id="coachClass" value="2029" size="5"> · Coachee class: <input id="coacheeClass" value="2030" size="5"> · Changing anything here re-runs the matching and clears hand edits.</p>
+    <p class="hint">Changing a weight or a class role re-runs the matching and clears hand edits.</p>
   </details>
 
   <section style="display:grid;gap:12px">
@@ -143,14 +175,14 @@ footer { color: var(--muted); font-size: .82rem; }
     </div>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Coach (2029)</th><th>Coachee (2030)</th><th>Score</th><th>In common</th></tr></thead>
+        <thead><tr><th>Coach</th><th>Coachee</th><th>Score</th><th>In common</th></tr></thead>
         <tbody id="rows"></tbody>
       </table>
     </div>
     <p class="unmatched" id="unmatched" hidden></p>
   </section>
 
-  <footer>Score is 0–100: weighted overlap of their answers. Compare scores to each other, not to 100. To swap someone, change their coach in the dropdown. The other options are sorted best-first.</footer>
+  <footer>Score is 0–100: weighted overlap of their answers. Compare scores to each other, not to 100. To swap someone, change their coach in the dropdown; options are sorted best-first. A Teams link sends from whoever clicks it, so each one goes to that pair's coach.</footer>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
@@ -163,8 +195,8 @@ footer { color: var(--muted); font-size: .82rem; }
   // header: short column name (Power Automate workbook)
   // question: the Microsoft Forms question text (Forms "Open in Excel" export)
   const FIELDS = [
-    { key: "focus", header: "Coaching Focus", question: "Coaches (29ers): what can you help with?", label: "Coaching focus", weight: 3, kind: "list" },
-    { key: "major", header: "Major", question: "Major (30ers: majors you're considering)", label: "Major", weight: 3, kind: "list" },
+    { key: "focus", header: "Coaching Focus", question: "If you're coaching: what can you help with?", label: "Coaching focus", weight: 3, kind: "list" },
+    { key: "major", header: "Major", question: "Major (if undeclared: majors you're considering)", label: "Major", weight: 3, kind: "list" },
     { key: "research", header: "Research Areas", question: "Research areas you're interested in", label: "Research", weight: 3, kind: "list" },
     { key: "grad", header: "Grad School Plans", question: "Grad school / fellowships you're interested in", label: "Grad school", weight: 2, kind: "list" },
     { key: "career", header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", label: "AF/SF career", weight: 2, kind: "list" },
@@ -292,8 +324,14 @@ footer { color: var(--muted); font-size: .82rem; }
     return ans;
   }
 
-  // rows: array of arrays, headers: array of strings
-  function readPeople(headers, rows, opts) {
+  // Class year as a short label: "2029", or the raw answer if no year in it.
+  function classOf(raw) {
+    const m = String(raw == null ? "" : raw).match(/20\d\d/);
+    return m ? m[0] : String(raw == null ? "" : raw).trim();
+  }
+
+  // rows: array of arrays, headers: array of strings. Returns everyone, deduped by email (last wins).
+  function readPeople(headers, rows) {
     const cols = {
       name: findColumn(headers, ID_COLS.name),
       email: findColumn(headers, ID_COLS.email),
@@ -306,20 +344,26 @@ footer { color: var(--muted); font-size: .82rem; }
     if (cols.classYear < 0) missing.push("Class year");
     FIELDS.forEach((f, k) => { if (fieldCols[k] < 0) missing.push(f.header); });
 
-    const coaches = new Map(), coachees = new Map();
+    const byKey = new Map();
     for (const row of rows) {
       const get = (i) => (i < 0 ? "" : row[i] == null ? "" : String(row[i]));
-      const name = get(cols.name).trim(), email = get(cols.email).trim(), cls = get(cols.classYear);
+      const name = get(cols.name).trim(), email = get(cols.email).trim();
       if (!name && !email) continue;
-      const person = {
-        name, email, classYear: cls,
+      byKey.set((email || name).toLowerCase(), {
+        name, email, cls: classOf(get(cols.classYear)) || "Unknown",
         answers: FIELDS.map((f, k) => (f.kind === "text" ? keywords(get(fieldCols[k])) : parseList(get(fieldCols[k])))),
-      };
-      const key = (email || name).toLowerCase();
-      if (cls.includes(opts.coachClass)) coaches.set(key, person);
-      else if (cls.includes(opts.coacheeClass)) coachees.set(key, person);
+      });
     }
-    return { coaches: [...coaches.values()], coachees: [...coachees.values()], missing };
+    return { people: [...byKey.values()], missing };
+  }
+
+  // Teams deep link: opens a 1:1 chat with `email`, message pre-typed (sender just hits Send).
+  function teamsLink(email, message) {
+    return "https://teams.microsoft.com/l/chat/0/0?users=" + encodeURIComponent(email) + "&message=" + encodeURIComponent(message);
+  }
+
+  function fillTemplate(tpl, v) {
+    return tpl.replace(/\{(\w+)\}/g, (all, k) => (k in v ? v[k] : all));
   }
 
   function match(coaches, coachees, weights) {
@@ -334,7 +378,7 @@ footer { color: var(--muted); font-size: .82rem; }
     return { score, cap, assignment: coachees.map((_, i) => slotCoach[a[i]]) };
   }
 
-  const api = { FIELDS, parseList, keywords, jaccard, similarity, shared, hungarian, readPeople, match, findColumn };
+  const api = { FIELDS, parseList, keywords, jaccard, similarity, shared, hungarian, readPeople, match, findColumn, classOf, teamsLink, fillTemplate };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.Matcher = api;
 })(this);
@@ -342,16 +386,22 @@ footer { color: var(--muted); font-size: .82rem; }
 </script>
 <script>
 // Fake cadets for the demo. Not real people.
-window.SAMPLE_DATA = {"headers": ["Name", "Email", "Class Year", "Squadron", "Coaching Focus", "Major", "Minor", "Grad School Plans", "AF Career Interests", "Future Path", "Opportunities", "Research Areas", "Research Interests", "Fun", "Issues", "Anything Else"], "rows": [["Alex Nguyen", "C29Alex.Nguyen@example.com", "2029", "21", "Navigating cadet life;", "Astronautical Engineering;Behavioral Sciences;Space Operations;", "Philosophy;Religion Studies;Nuclear Weapons & Strategy;", "Master's right after graduation;", "Combat Systems Officer;", "Law;", "Internships;Ops Air Force;", "Economics;", "I'm interested in swarm autonomy for drones and leadership psychology under stress.", "Gaming;", "Economic opportunity;Faith & values;Mental health;", ""], ["Jordan Patel", "C29Jordan.Patel@example.com", "2029", "37", "[\"Navigating cadet life\", \"Academics & study habits\", \"Grad school planning\"]", "[\"Management\"]", "[\"Nuclear Weapons & Strategy\"]", "[\"Fulbright\", \"Master's right after graduation\"]", "[\"Finance / Contracting\"]", "[\"Academia / research\", \"Career military\"]", "[\"Conferences / presenting\", \"Ops Air Force\", \"Jump\"]", "[\"Aerospace / hypersonics\"]", "I'm interested in leadership psychology under stress and swarm autonomy for drones.", "[\"Music\", \"Film / TV\", \"Art / photography\"]", "[\"Community service\", \"Global security\", \"Healthcare\"]", ""], ["Sam Lopez", "C29Sam.Lopez@example.com", "2029", "38", "Research opportunities;AF/SF career planning;", "Political Science;", "Space Studies;", "PhD;", "JAG;Medical;", "Not sure yet;Academia / research;", "Internships;Conferences / presenting;Cadet leadership positions;", "National security / policy;", "I'm interested in machine learning for satellite imagery and cyber defense of space systems.", "Lifting;Climbing;", "Faith & values;Global security;Economic opportunity;", ""], ["Riley Martinez", "C29Riley.Martinez@example.com", "2029", "23", "[\"Leadership & military training\", \"Wellness & balance\", \"Choosing a major\"]", "[\"Data Science\"]", "[\"Philosophy\", \"Foreign language\"]", "[\"Law school\", \"Schwarzman\", \"Medical school\"]", "[\"OSI\", \"Acquisitions / Program Management\", \"Maintenance / Logistics\"]", "[\"Medicine\", \"Career military\", \"Government / policy\"]", "[\"Study abroad / exchange semester\", \"Internships\"]", "[\"Autonomy / drones\", \"Space\"]", "I'm interested in Cold War nuclear strategy and machine learning for satellite imagery.", "[\"Gaming\", \"Faith community\", \"Music\"]", "[\"Education access\", \"Veterans\"]", ""], ["Taylor Thomas", "C29Taylor.Thomas@example.com", "2029", "29", "Time management;AF/SF career planning;", "Space Operations;", "Nuclear Weapons & Strategy;Global Logistics;", "Gates Cambridge;Medical school;", "Developmental Engineer;Space Operations;", "Academia / research;", "Ops Air Force;", "Climate / environment;AI / machine learning;Education;", "I'm interested in leadership psychology under stress and machine learning for satellite imagery.", "Writing;Running;", "Community service;", ""], ["Morgan Smith", "C29Morgan.Smith@example.com", "2029", "35", "[\"Wellness & balance\", \"Research opportunities\"]", "[\"Operations Research\"]", "[\"Foreign language\", \"Space Studies\", \"Global Logistics\"]", "[\"Mitchell\", \"Not planning grad school\", \"Not sure yet\"]", "[\"Air Battle Manager\", \"Medical\"]", "[\"Law\", \"Career military\", \"Industry / tech\"]", "[\"Ops Air Force\"]", "[\"Energy\", \"Autonomy / drones\"]", "I'm interested in human performance and sleep and leadership psychology under stress.", "[\"Hiking / outdoors\"]", "[\"Faith & values\"]", ""], ["Casey Kim", "C29Casey.Kim@example.com", "2029", "10", "Choosing a major;Research opportunities;Academics & study habits;", "Systems Engineering;", "Other;", "Medical school;", "Missiles;Public Affairs;", "Not sure yet;Career military;", "Competition teams / clubs;", "Education;Climate / environment;", "I'm interested in Cold War nuclear strategy and hypersonic flow and heat shields.", "Hiking / outdoors;", "Global security;Ethics in technology;Healthcare;", ""], ["Jamie Brown", "C29Jamie.Brown@example.com", "2029", "11", "[\"Academics & study habits\", \"Grad school planning\", \"Research opportunities\"]", "[\"Operations Research\"]", "[\"Foreign language\", \"Other\", \"Nuclear Weapons & Strategy\"]", "[\"Medical school\", \"Marshall\"]", "[\"Scientist\", \"JAG\", \"Missiles\"]", "[\"Medicine\"]", "[\"Publishing research\"]", "[\"National security / policy\", \"Education\", \"Space\"]", "I'm interested in leadership psychology under stress and ethics of autonomous weapons.", "[\"Faith community\"]", "[\"Climate\", \"Economic opportunity\", \"Mentorship / first-gen students\"]", ""], ["Avery Wilson", "C29Avery.Wilson@example.com", "2029", "32", "Academics & study habits;Wellness & balance;", "Humanities;Data Science;", "Global Logistics;", "Not sure yet;Law school;", "Missiles;RPA Pilot;", "Industry / tech;", "Competition teams / clubs;", "National security / policy;", "I'm interested in ethics of autonomous weapons and cyber defense of space systems.", "Running;Film / TV;Travel;", "Global security;Education access;Faith & values;", ""], ["Quinn Moore", "C29Quinn.Moore@example.com", "2029", "25", "[\"Grad school planning\", \"Leadership & military training\", \"Fellowships & scholarships\"]", "[\"Political Science\", \"Meteorology\"]", "[\"Philosophy\", \"Other\"]", "[\"Mitchell\", \"Hertz / NSF GRFP\", \"Not planning grad school\"]", "[\"RPA Pilot\", \"Cyber\", \"Public Affairs\"]", "[\"Career military\"]", "[\"Conferences / presenting\"]", "[\"Cybersecurity\", \"Materials\"]", "I'm interested in leadership psychology under stress and cyber defense of space systems.", "[\"Cooking\", \"Skiing / snowboarding\", \"Reading\"]", "[\"Veterans\", \"Mental health\", \"Faith & values\"]", ""], ["Drew Garcia", "C30Drew.Garcia@example.com", "2030", "7", "Fellowships & scholarships;Navigating cadet life;Grad school planning;", "Aeronautical Engineering;", "Space Studies;Religion Studies;", "Truman;Not sure yet;PhD;", "Scientist;Weather;", "Academia / research;Career military;", "Jump;Competition teams / clubs;Cadet leadership positions;", "Cybersecurity;Quantum / physics;Aerospace / hypersonics;", "I'm interested in great power competition and great power competition.", "Travel;", "Faith & values;", ""], ["Reese Johnson", "C30Reese.Johnson@example.com", "2030", "1", "[\"Fellowships & scholarships\"]", "[\"Humanities\"]", "[\"Philosophy\", \"Nuclear Weapons & Strategy\", \"Foreign language\"]", "[\"Medical school\", \"Master's right after graduation\"]", "[\"Weather\", \"Medical\", \"Air Battle Manager\"]", "[\"Career military\", \"Industry / tech\", \"Law\"]", "[\"Summer research\", \"Internships\"]", "[\"Psychology / leadership\", \"Quantum / physics\", \"AI / machine learning\"]", "I'm interested in hypersonic flow and heat shields and cyber defense of space systems.", "[\"Chess / board games\", \"Music\"]", "[\"Ethics in technology\", \"Healthcare\", \"Mentorship / first-gen students\"]", ""], ["Skyler Davis", "C30Skyler.Davis@example.com", "2030", "35", "Time management;Grad school planning;", "Legal Studies;Undecided;Data Science;", "Space Studies;Other;None / undecided;", "Mitchell;", "Maintenance / Logistics;", "Medicine;Career military;", "Ops Air Force;Cadet leadership positions;Internships;", "Materials;", "I'm interested in hypersonic flow and heat shields and machine learning for satellite imagery.", "Cooking;Skiing / snowboarding;Film / TV;", "Healthcare;", ""], ["Parker Anderson", "C30Parker.Anderson@example.com", "2030", "15", "[\"Choosing a major\", \"Navigating cadet life\", \"Leadership & military training\"]", "[\"Military & Strategic Studies\"]", "[\"Religion Studies\"]", "[\"Mitchell\", \"Master's right after graduation\", \"Not planning grad school\"]", "[\"Security Forces\", \"Intelligence\"]", "[\"Medicine\", \"Career military\"]", "[\"Jump\", \"Summer research\", \"Conferences / presenting\"]", "[\"Psychology / leadership\", \"Climate / environment\", \"History\"]", "I'm interested in swarm autonomy for drones and quantum sensing.", "[\"Chess / board games\", \"Writing\"]", "[\"Education access\", \"Economic opportunity\", \"Climate\"]", ""], ["Rowan Nguyen", "C30Rowan.Nguyen@example.com", "2030", "7", "AF/SF career planning;", "Astronautical Engineering;Undecided;", "Nuclear Weapons & Strategy;", "Not planning grad school;", "Scientist;Maintenance / Logistics;", "Not sure yet;", "Jump;Internships;Soaring / powered flight;", "Energy;", "I'm interested in quantum sensing and hypersonic flow and heat shields.", "Running;Climbing;", "Education access;Faith & values;", ""], ["Emerson Patel", "C30Emerson.Patel@example.com", "2030", "15", "[\"AF/SF career planning\"]", "[\"History\"]", "[\"Global Logistics\"]", "[\"Mitchell\", \"Schwarzman\", \"PhD\"]", "[\"Combat Systems Officer\"]", "[\"Government / policy\", \"Career military\", \"Industry / tech\"]", "[\"Summer research\", \"Study abroad / exchange semester\"]", "[\"Materials\"]", "I'm interested in renewable energy on bases and Cold War nuclear strategy.", "[\"Music\", \"Writing\", \"Gaming\"]", "[\"Economic opportunity\", \"Veterans\", \"Ethics in technology\"]", ""], ["Hayden Lopez", "C30Hayden.Lopez@example.com", "2030", "23", "AF/SF career planning;", "Aeronautical Engineering;", "Space Studies;", "Hertz / NSF GRFP;Truman;Not planning grad school;", "Undecided;", "Not sure yet;Entrepreneurship;", "Publishing research;Soaring / powered flight;", "Biomedical / human performance;Space;Energy;", "I'm interested in ethics of autonomous weapons and renewable energy on bases.", "Faith community;", "Mental health;Veterans;", ""], ["Kendall Martinez", "C30Kendall.Martinez@example.com", "2030", "1", "[\"AF/SF career planning\"]", "[\"Civil Engineering\", \"Astronautical Engineering\"]", "[\"Other\"]", "[\"Medical school\", \"Schwarzman\", \"PhD\"]", "[\"Acquisitions / Program Management\"]", "[\"Not sure yet\"]", "[\"Study abroad / exchange semester\"]", "[\"Psychology / leadership\", \"AI / machine learning\"]", "I'm interested in Cold War nuclear strategy and human performance and sleep.", "[\"Art / photography\", \"Gaming\"]", "[\"Ethics in technology\"]", ""], ["Logan Thomas", "C30Logan.Thomas@example.com", "2030", "14", "Fellowships & scholarships;Academics & study habits;", "Foreign Area Studies;Behavioral Sciences;", "Nuclear Weapons & Strategy;None / undecided;", "Truman;Not planning grad school;Master's right after graduation;", "RPA Pilot;", "Industry / tech;Not sure yet;", "Conferences / presenting;Summer research;", "AI / machine learning;Cybersecurity;", "I'm interested in Cold War nuclear strategy and renewable energy on bases.", "Climbing;", "Mentorship / first-gen students;Veterans;Community service;", ""], ["Blake Smith", "C30Blake.Smith@example.com", "2030", "21", "[\"Leadership & military training\", \"Fellowships & scholarships\", \"AF/SF career planning\"]", "[\"Mechanical Engineering\", \"Meteorology\", \"Chemistry\"]", "[\"Other\"]", "[\"Law school\", \"Not sure yet\", \"Master's right after graduation\"]", "[\"JAG\"]", "[\"Career military\", \"Law\", \"Medicine\"]", "[\"Ops Air Force\", \"Internships\", \"Summer research\"]", "[\"Cybersecurity\"]", "I'm interested in renewable energy on bases and human performance and sleep.", "[\"Faith community\"]", "[\"Mentorship / first-gen students\", \"Mental health\"]", ""], ["Cameron Kim", "C30Cameron.Kim@example.com", "2030", "2", "Time management;Grad school planning;Leadership & military training;", "Aeronautical Engineering;History;", "Philosophy;", "Master's right after graduation;Marshall;Law school;", "Medical;Scientist;RPA Pilot;", "Government / policy;Medicine;", "Ops Air Force;", "Psychology / leadership;Climate / environment;Economics;", "I'm interested in quantum sensing and hypersonic flow and heat shields.", "Writing;Lifting;", "Economic opportunity;Climate;Education access;", ""], ["Dakota Brown", "C30Dakota.Brown@example.com", "2030", "39", "[\"Research opportunities\"]", "[\"Meteorology\", \"Philosophy\"]", "[\"Nuclear Weapons & Strategy\", \"None / undecided\", \"Other\"]", "[\"Rhodes\"]", "[\"Combat Systems Officer\", \"Medical\"]", "[\"Industry / tech\", \"Medicine\"]", "[\"Competition teams / clubs\"]", "[\"Materials\", \"Climate / environment\"]", "I'm interested in cyber defense of space systems and cyber defense of space systems.", "[\"Music\"]", "[\"Education access\", \"Healthcare\"]", ""], ["Elliot Wilson", "C30Elliot.Wilson@example.com", "2030", "2", "Leadership & military training;Choosing a major;", "History;Data Science;Foreign Area Studies;", "Space Studies;", "PhD;", "Space Operations;", "Entrepreneurship;Academia / research;Industry / tech;", "Publishing research;Soaring / powered flight;Internships;", "History;Space;Climate / environment;", "I'm interested in cyber defense of space systems and quantum sensing.", "Team sports;", "Healthcare;", ""], ["Finley Moore", "C30Finley.Moore@example.com", "2030", "29", "[\"AF/SF career planning\", \"Fellowships & scholarships\"]", "[\"English\", \"Foreign Area Studies\"]", "[\"Philosophy\", \"Other\"]", "[\"Rhodes\", \"Gates Cambridge\"]", "[\"Maintenance / Logistics\", \"Air Battle Manager\"]", "[\"Career military\"]", "[\"Soaring / powered flight\", \"Conferences / presenting\", \"Jump\"]", "[\"Ethics / philosophy\"]", "I'm interested in quantum sensing and leadership psychology under stress.", "[\"Cooking\"]", "[\"Ethics in technology\", \"Mental health\"]", ""]]};
+window.SAMPLE_DATA = {"headers": ["Name", "Email", "Class Year", "Squadron", "Coaching Focus", "Major", "Minor", "Grad School Plans", "AF Career Interests", "Future Path", "Opportunities", "Research Areas", "Research Interests", "Fun", "Issues", "Anything Else"], "rows": [["Alex Nguyen", "C28Alex.Nguyen@example.com", "2028", "21", "Navigating cadet life;", "Astronautical Engineering;Behavioral Sciences;Space Operations;", "Philosophy;Religion Studies;Nuclear Weapons & Strategy;", "Master's right after graduation;", "Combat Systems Officer;", "Law;", "Internships;Ops Air Force;", "Economics;", "I'm interested in swarm autonomy for drones and leadership psychology under stress.", "Gaming;", "Economic opportunity;Faith & values;Mental health;", ""], ["Jordan Johnson", "C28Jordan.Johnson@example.com", "2028", "37", "[\"Navigating cadet life\", \"Academics & study habits\", \"Grad school planning\"]", "[\"Management\"]", "[\"Nuclear Weapons & Strategy\"]", "[\"Fulbright\", \"Master's right after graduation\"]", "[\"Finance / Contracting\"]", "[\"Academia / research\", \"Career military\"]", "[\"Conferences / presenting\", \"Ops Air Force\", \"Jump\"]", "[\"Aerospace / hypersonics\"]", "I'm interested in leadership psychology under stress and swarm autonomy for drones.", "[\"Music\", \"Film / TV\", \"Art / photography\"]", "[\"Community service\", \"Global security\", \"Healthcare\"]", ""], ["Sam Wilson", "C28Sam.Wilson@example.com", "2028", "38", "Research opportunities;AF/SF career planning;", "Political Science;", "Space Studies;", "PhD;", "JAG;Medical;", "Not sure yet;Academia / research;", "Internships;Conferences / presenting;Cadet leadership positions;", "National security / policy;", "I'm interested in machine learning for satellite imagery and cyber defense of space systems.", "Lifting;Climbing;", "Faith & values;Global security;Economic opportunity;", ""], ["Riley Smith", "C28Riley.Smith@example.com", "2028", "23", "[\"Leadership & military training\", \"Wellness & balance\", \"Choosing a major\"]", "[\"Data Science\"]", "[\"Philosophy\", \"Foreign language\"]", "[\"Law school\", \"Schwarzman\", \"Medical school\"]", "[\"OSI\", \"Acquisitions / Program Management\", \"Maintenance / Logistics\"]", "[\"Medicine\", \"Career military\", \"Government / policy\"]", "[\"Study abroad / exchange semester\", \"Internships\"]", "[\"Autonomy / drones\", \"Space\"]", "I'm interested in Cold War nuclear strategy and machine learning for satellite imagery.", "[\"Gaming\", \"Faith community\", \"Music\"]", "[\"Education access\", \"Veterans\"]", ""], ["Taylor Lopez", "C29Taylor.Lopez@example.com", "2029", "29", "Time management;AF/SF career planning;", "Space Operations;", "Nuclear Weapons & Strategy;Global Logistics;", "Gates Cambridge;Medical school;", "Developmental Engineer;Space Operations;", "Academia / research;", "Ops Air Force;", "Climate / environment;AI / machine learning;Education;", "I'm interested in leadership psychology under stress and machine learning for satellite imagery.", "Writing;Running;", "Community service;", ""], ["Morgan Anderson", "C29Morgan.Anderson@example.com", "2029", "35", "[\"Wellness & balance\", \"Research opportunities\"]", "[\"Operations Research\"]", "[\"Foreign language\", \"Space Studies\", \"Global Logistics\"]", "[\"Mitchell\", \"Not planning grad school\", \"Not sure yet\"]", "[\"Air Battle Manager\", \"Medical\"]", "[\"Law\", \"Career military\", \"Industry / tech\"]", "[\"Ops Air Force\"]", "[\"Energy\", \"Autonomy / drones\"]", "I'm interested in human performance and sleep and leadership psychology under stress.", "[\"Hiking / outdoors\"]", "[\"Faith & values\"]", ""], ["Casey Garcia", "C29Casey.Garcia@example.com", "2029", "10", "Choosing a major;Research opportunities;Academics & study habits;", "Systems Engineering;", "Other;", "Medical school;", "Missiles;Public Affairs;", "Not sure yet;Career military;", "Competition teams / clubs;", "Education;Climate / environment;", "I'm interested in Cold War nuclear strategy and hypersonic flow and heat shields.", "Hiking / outdoors;", "Global security;Ethics in technology;Healthcare;", ""], ["Jamie Brown", "C29Jamie.Brown@example.com", "2029", "11", "[\"Academics & study habits\", \"Grad school planning\", \"Research opportunities\"]", "[\"Operations Research\"]", "[\"Foreign language\", \"Other\", \"Nuclear Weapons & Strategy\"]", "[\"Medical school\", \"Marshall\"]", "[\"Scientist\", \"JAG\", \"Missiles\"]", "[\"Medicine\"]", "[\"Publishing research\"]", "[\"National security / policy\", \"Education\", \"Space\"]", "I'm interested in leadership psychology under stress and ethics of autonomous weapons.", "[\"Faith community\"]", "[\"Climate\", \"Economic opportunity\", \"Mentorship / first-gen students\"]", ""], ["Avery Thomas", "C29Avery.Thomas@example.com", "2029", "32", "Academics & study habits;Wellness & balance;", "Humanities;Data Science;", "Global Logistics;", "Not sure yet;Law school;", "Missiles;RPA Pilot;", "Industry / tech;", "Competition teams / clubs;", "National security / policy;", "I'm interested in ethics of autonomous weapons and cyber defense of space systems.", "Running;Film / TV;Travel;", "Global security;Education access;Faith & values;", ""], ["Quinn Patel", "C29Quinn.Patel@example.com", "2029", "25", "[\"Grad school planning\", \"Leadership & military training\", \"Fellowships & scholarships\"]", "[\"Political Science\", \"Meteorology\"]", "[\"Philosophy\", \"Other\"]", "[\"Mitchell\", \"Hertz / NSF GRFP\", \"Not planning grad school\"]", "[\"RPA Pilot\", \"Cyber\", \"Public Affairs\"]", "[\"Career military\"]", "[\"Conferences / presenting\"]", "[\"Cybersecurity\", \"Materials\"]", "I'm interested in leadership psychology under stress and cyber defense of space systems.", "[\"Cooking\", \"Skiing / snowboarding\", \"Reading\"]", "[\"Veterans\", \"Mental health\", \"Faith & values\"]", ""], ["Drew Davis", "C29Drew.Davis@example.com", "2029", "7", "Fellowships & scholarships;Navigating cadet life;Grad school planning;", "Aeronautical Engineering;", "Space Studies;Religion Studies;", "Truman;Not sure yet;PhD;", "Scientist;Weather;", "Academia / research;Career military;", "Jump;Competition teams / clubs;Cadet leadership positions;", "Cybersecurity;Quantum / physics;Aerospace / hypersonics;", "I'm interested in great power competition and great power competition.", "Travel;", "Faith & values;", ""], ["Reese Moore", "C29Reese.Moore@example.com", "2029", "1", "[\"Fellowships & scholarships\"]", "[\"Humanities\"]", "[\"Philosophy\", \"Nuclear Weapons & Strategy\", \"Foreign language\"]", "[\"Medical school\", \"Master's right after graduation\"]", "[\"Weather\", \"Medical\", \"Air Battle Manager\"]", "[\"Career military\", \"Industry / tech\", \"Law\"]", "[\"Summer research\", \"Internships\"]", "[\"Psychology / leadership\", \"Quantum / physics\", \"AI / machine learning\"]", "I'm interested in hypersonic flow and heat shields and cyber defense of space systems.", "[\"Chess / board games\", \"Music\"]", "[\"Ethics in technology\", \"Healthcare\", \"Mentorship / first-gen students\"]", ""], ["Skyler Kim", "C29Skyler.Kim@example.com", "2029", "35", "Time management;Grad school planning;", "Legal Studies;Undecided;Data Science;", "Space Studies;Other;None / undecided;", "Mitchell;", "Maintenance / Logistics;", "Medicine;Career military;", "Ops Air Force;Cadet leadership positions;Internships;", "Materials;", "I'm interested in hypersonic flow and heat shields and machine learning for satellite imagery.", "Cooking;Skiing / snowboarding;Film / TV;", "Healthcare;", ""], ["Parker Martinez", "C29Parker.Martinez@example.com", "2029", "15", "[\"Choosing a major\", \"Navigating cadet life\", \"Leadership & military training\"]", "[\"Military & Strategic Studies\"]", "[\"Religion Studies\"]", "[\"Mitchell\", \"Master's right after graduation\", \"Not planning grad school\"]", "[\"Security Forces\", \"Intelligence\"]", "[\"Medicine\", \"Career military\"]", "[\"Jump\", \"Summer research\", \"Conferences / presenting\"]", "[\"Psychology / leadership\", \"Climate / environment\", \"History\"]", "I'm interested in swarm autonomy for drones and quantum sensing.", "[\"Chess / board games\", \"Writing\"]", "[\"Education access\", \"Economic opportunity\", \"Climate\"]", ""], ["Rowan Nguyen", "C30Rowan.Nguyen@example.com", "2030", "7", "AF/SF career planning;", "Astronautical Engineering;Undecided;", "Nuclear Weapons & Strategy;", "Not planning grad school;", "Scientist;Maintenance / Logistics;", "Not sure yet;", "Jump;Internships;Soaring / powered flight;", "Energy;", "I'm interested in quantum sensing and hypersonic flow and heat shields.", "Running;Climbing;", "Education access;Faith & values;", ""], ["Emerson Johnson", "C30Emerson.Johnson@example.com", "2030", "15", "[\"AF/SF career planning\"]", "[\"History\"]", "[\"Global Logistics\"]", "[\"Mitchell\", \"Schwarzman\", \"PhD\"]", "[\"Combat Systems Officer\"]", "[\"Government / policy\", \"Career military\", \"Industry / tech\"]", "[\"Summer research\", \"Study abroad / exchange semester\"]", "[\"Materials\"]", "I'm interested in renewable energy on bases and Cold War nuclear strategy.", "[\"Music\", \"Writing\", \"Gaming\"]", "[\"Economic opportunity\", \"Veterans\", \"Ethics in technology\"]", ""], ["Hayden Wilson", "C30Hayden.Wilson@example.com", "2030", "23", "AF/SF career planning;", "Aeronautical Engineering;", "Space Studies;", "Hertz / NSF GRFP;Truman;Not planning grad school;", "Undecided;", "Not sure yet;Entrepreneurship;", "Publishing research;Soaring / powered flight;", "Biomedical / human performance;Space;Energy;", "I'm interested in ethics of autonomous weapons and renewable energy on bases.", "Faith community;", "Mental health;Veterans;", ""], ["Kendall Smith", "C30Kendall.Smith@example.com", "2030", "1", "[\"AF/SF career planning\"]", "[\"Civil Engineering\", \"Astronautical Engineering\"]", "[\"Other\"]", "[\"Medical school\", \"Schwarzman\", \"PhD\"]", "[\"Acquisitions / Program Management\"]", "[\"Not sure yet\"]", "[\"Study abroad / exchange semester\"]", "[\"Psychology / leadership\", \"AI / machine learning\"]", "I'm interested in Cold War nuclear strategy and human performance and sleep.", "[\"Art / photography\", \"Gaming\"]", "[\"Ethics in technology\"]", ""], ["Logan Lopez", "C30Logan.Lopez@example.com", "2030", "14", "Fellowships & scholarships;Academics & study habits;", "Foreign Area Studies;Behavioral Sciences;", "Nuclear Weapons & Strategy;None / undecided;", "Truman;Not planning grad school;Master's right after graduation;", "RPA Pilot;", "Industry / tech;Not sure yet;", "Conferences / presenting;Summer research;", "AI / machine learning;Cybersecurity;", "I'm interested in Cold War nuclear strategy and renewable energy on bases.", "Climbing;", "Mentorship / first-gen students;Veterans;Community service;", ""], ["Blake Anderson", "C30Blake.Anderson@example.com", "2030", "21", "[\"Leadership & military training\", \"Fellowships & scholarships\", \"AF/SF career planning\"]", "[\"Mechanical Engineering\", \"Meteorology\", \"Chemistry\"]", "[\"Other\"]", "[\"Law school\", \"Not sure yet\", \"Master's right after graduation\"]", "[\"JAG\"]", "[\"Career military\", \"Law\", \"Medicine\"]", "[\"Ops Air Force\", \"Internships\", \"Summer research\"]", "[\"Cybersecurity\"]", "I'm interested in renewable energy on bases and human performance and sleep.", "[\"Faith community\"]", "[\"Mentorship / first-gen students\", \"Mental health\"]", ""], ["Cameron Garcia", "C30Cameron.Garcia@example.com", "2030", "2", "Time management;Grad school planning;Leadership & military training;", "Aeronautical Engineering;History;", "Philosophy;", "Master's right after graduation;Marshall;Law school;", "Medical;Scientist;RPA Pilot;", "Government / policy;Medicine;", "Ops Air Force;", "Psychology / leadership;Climate / environment;Economics;", "I'm interested in quantum sensing and hypersonic flow and heat shields.", "Writing;Lifting;", "Economic opportunity;Climate;Education access;", ""], ["Dakota Brown", "C30Dakota.Brown@example.com", "2030", "39", "[\"Research opportunities\"]", "[\"Meteorology\", \"Philosophy\"]", "[\"Nuclear Weapons & Strategy\", \"None / undecided\", \"Other\"]", "[\"Rhodes\"]", "[\"Combat Systems Officer\", \"Medical\"]", "[\"Industry / tech\", \"Medicine\"]", "[\"Competition teams / clubs\"]", "[\"Materials\", \"Climate / environment\"]", "I'm interested in cyber defense of space systems and cyber defense of space systems.", "[\"Music\"]", "[\"Education access\", \"Healthcare\"]", ""], ["Elliot Thomas", "C30Elliot.Thomas@example.com", "2030", "2", "Leadership & military training;Choosing a major;", "History;Data Science;Foreign Area Studies;", "Space Studies;", "PhD;", "Space Operations;", "Entrepreneurship;Academia / research;Industry / tech;", "Publishing research;Soaring / powered flight;Internships;", "History;Space;Climate / environment;", "I'm interested in cyber defense of space systems and quantum sensing.", "Team sports;", "Healthcare;", ""], ["Finley Patel", "C30Finley.Patel@example.com", "2030", "29", "[\"AF/SF career planning\", \"Fellowships & scholarships\"]", "[\"English\", \"Foreign Area Studies\"]", "[\"Philosophy\", \"Other\"]", "[\"Rhodes\", \"Gates Cambridge\"]", "[\"Maintenance / Logistics\", \"Air Battle Manager\"]", "[\"Career military\"]", "[\"Soaring / powered flight\", \"Conferences / presenting\", \"Jump\"]", "[\"Ethics / philosophy\"]", "I'm interested in quantum sensing and leadership psychology under stress.", "[\"Cooking\"]", "[\"Ethics in technology\", \"Mental health\"]", ""], ["Alex Martinez", "C30Alex.Martinez@example.com", "2030", "18", "Academics & study habits;", "Economics;Meteorology;Chemistry;", "Nuclear Weapons & Strategy;", "Master's right after graduation;Gates Cambridge;", "Missiles;", "Career military;Law;", "Cadet leadership positions;Publishing research;Ops Air Force;", "Aerospace / hypersonics;AI / machine learning;History;", "I'm interested in quantum sensing and cyber defense of space systems.", "Skiing / snowboarding;Writing;Gaming;", "Mentorship / first-gen students;", ""], ["Jordan Nguyen", "C30Jordan.Nguyen@example.com", "2030", "9", "[\"Leadership & military training\"]", "[\"Electrical & Computer Engineering\", \"Economics\"]", "[\"Nuclear Weapons & Strategy\", \"Global Logistics\"]", "[\"Medical school\", \"Schwarzman\", \"Mitchell\"]", "[\"Developmental Engineer\", \"Acquisitions / Program Management\", \"Medical\"]", "[\"Law\", \"Career military\", \"Industry / tech\"]", "[\"Study abroad / exchange semester\", \"Internships\", \"Ops Air Force\"]", "[\"Education\", \"Quantum / physics\", \"Space\"]", "I'm interested in cyber defense of space systems and human performance and sleep.", "[\"Volunteering\", \"Skiing / snowboarding\"]", "[\"Climate\", \"Economic opportunity\", \"Education access\"]", ""], ["Sam Johnson", "C30Sam.Johnson@example.com", "2030", "12", "Time management;Choosing a major;", "Cyber Science;English;", "Space Studies;Foreign language;", "Not planning grad school;Mitchell;Not sure yet;", "JAG;Intelligence;", "Entrepreneurship;Academia / research;", "Competition teams / clubs;", "History;Aerospace / hypersonics;", "I'm interested in renewable energy on bases and great power competition.", "Music;Climbing;Skiing / snowboarding;", "Community service;", ""], ["Riley Wilson", "C30Riley.Wilson@example.com", "2030", "26", "[\"Leadership & military training\", \"Navigating cadet life\", \"AF/SF career planning\"]", "[\"Chemistry\"]", "[\"Other\"]", "[\"Not sure yet\", \"Not planning grad school\", \"Hertz / NSF GRFP\"]", "[\"Medical\", \"Pilot\", \"RPA Pilot\"]", "[\"Not sure yet\", \"Government / policy\"]", "[\"Internships\"]", "[\"Cybersecurity\"]", "I'm interested in machine learning for satellite imagery and great power competition.", "[\"Hiking / outdoors\", \"Travel\", \"Lifting\"]", "[\"Mental health\", \"Economic opportunity\", \"Veterans\"]", ""]]};
 
 </script>
 <script>
 const M = window.Matcher;
 const $ = (id) => document.getElementById(id);
-const state = { headers: [], rows: [], coaches: [], coachees: [], score: [], assign: [], auto: [], fileName: null };
+const state = { people: [], missing: [], roles: {}, coaches: [], coachees: [], score: [], assign: [], auto: [] };
 const weights = Object.fromEntries(M.FIELDS.map((f) => [f.key, f.weight]));
+const DEFAULT_TEMPLATE = "Hi {coacheeFirst}! I'm {coach}, your Martinson Honors coach this semester. Looks like we have some things in common: {shared}. Want to meet up this week to talk classes, research, and whatever else is on your mind?";
+const YEAR = /^20\d\d$/;
 
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function recall(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+function firstName(n) { return String(n).split(/\s+/)[0]; }
+function classLabel(c) { return YEAR.test(c) ? "Class of " + c : c; }
 
 function buildWeights() {
   $("weights").innerHTML = M.FIELDS.map((f) => `
@@ -364,22 +414,62 @@ function buildWeights() {
   });
 }
 
+// Default: the youngest class gets coached, every older class coaches.
+function defaultRoles(classes) {
+  const years = classes.filter((c) => YEAR.test(c)).sort();
+  const roles = {};
+  classes.forEach((c) => (roles[c] = "skip"));
+  years.forEach((c, i) => (roles[c] = i === years.length - 1 && years.length > 1 ? "coachee" : "coach"));
+  return roles;
+}
+
+function buildRoles() {
+  const counts = {};
+  state.people.forEach((p) => (counts[p.cls] = (counts[p.cls] || 0) + 1));
+  const classes = Object.keys(counts).sort();
+  const defaults = defaultRoles(classes);
+  classes.forEach((c) => { if (!(c in state.roles)) state.roles[c] = defaults[c]; });
+  $("roles").innerHTML = classes.map((c, n) => `
+    <div class="role"><div><b>${esc(classLabel(c))}</b><small>${counts[c]} response${counts[c] === 1 ? "" : "s"}</small></div>
+      <div class="seg" role="radiogroup" aria-label="Role for ${esc(classLabel(c))}">
+        ${["coach", "coachee", "skip"].map((r) => `<input type="radio" name="role-${n}" id="role-${n}-${r}" value="${r}" data-cls="${esc(c)}" ${state.roles[c] === r ? "checked" : ""}><label for="role-${n}-${r}">${r === "coach" ? "Coach" : r === "coachee" ? "Coachee" : "Skip"}</label>`).join("")}
+      </div></div>`).join("");
+}
+$("roles").addEventListener("change", (e) => {
+  if (e.target.dataset.cls == null) return;
+  state.roles[e.target.dataset.cls] = e.target.value; run();
+});
+
+function classesWith(role) { return Object.keys(state.roles).filter((c) => state.roles[c] === role).sort(); }
+
 function run() {
-  const notice = $("notice");
-  notice.hidden = true;
-  const r = M.readPeople(state.headers, state.rows, { coachClass: $("coachClass").value.trim(), coacheeClass: $("coacheeClass").value.trim() });
-  state.coaches = r.coaches; state.coachees = r.coachees;
-  const warn = [];
-  if (r.missing.length) warn.push(`Couldn't find these columns, so they're ignored: ${r.missing.join(", ")}.`);
-  if (!r.coaches.length || !r.coachees.length) {
-    warn.push(`Found ${r.coaches.length} coaches and ${r.coachees.length} coachees. Check the class year values match the settings under "How much each question counts".`);
-    notice.textContent = warn.join(" "); notice.hidden = false;
-    state.assign = []; render(); return;
+  const msgs = [];
+  state.coaches = state.people.filter((p) => state.roles[p.cls] === "coach");
+  state.coachees = state.people.filter((p) => state.roles[p.cls] === "coachee");
+  $("l-coaches").textContent = "Coaches · " + (classesWith("coach").join(", ") || "none picked");
+  $("l-coachees").textContent = "Coachees · " + (classesWith("coachee").join(", ") || "none picked");
+  if (state.missing.length) msgs.push(`Couldn't find these columns, so they're ignored: ${state.missing.join(", ")}.`);
+  if (!state.coaches.length || !state.coachees.length) {
+    msgs.push('Mark at least one class as Coach and one as Coachee under "Who coaches whom".');
+    state.assign = []; state.score = [];
+  } else {
+    const m = M.match(state.coaches, state.coachees, weights);
+    state.score = m.score; state.assign = m.assignment.slice(); state.auto = m.assignment.slice();
   }
-  if (warn.length) { notice.textContent = warn.join(" "); notice.hidden = false; }
-  const m = M.match(r.coaches, r.coachees, weights);
-  state.score = m.score; state.assign = m.assignment.slice(); state.auto = m.assignment.slice();
+  $("notice").textContent = msgs.join(" ");
+  $("notice").hidden = !msgs.length;
   render();
+}
+
+function pairInfo(i) {
+  const co = state.coaches[state.assign[i]], ce = state.coachees[i];
+  const parts = M.shared(ce, co, weights);
+  const flat = parts.flatMap((p) => p.items).filter((x, k, a) => a.indexOf(x) === k).slice(0, 4);
+  const message = M.fillTemplate($("template").value || DEFAULT_TEMPLATE, {
+    coach: co.name, coachee: ce.name, coachFirst: firstName(co.name), coacheeFirst: firstName(ce.name),
+    shared: flat.length ? flat.join(", ") : "a lot to talk about",
+  });
+  return { co, ce, parts, message, link: M.teamsLink(ce.email, message), score: state.score[i][state.assign[i]] };
 }
 
 function scoreColor(s, all) {
@@ -398,26 +488,27 @@ function render() {
   $("s-avg").textContent = pairScores.length ? Math.round(pairScores.reduce((a, b) => a + b, 0) / pairScores.length) : 0;
   const maxScore = Math.max(1, ...pairScores);
 
-  const order = coachees.map((_, i) => i).sort((a, b) => coaches[assign[a]].name.localeCompare(coaches[assign[b]].name) || b - a);
+  const order = assign.map((_, i) => i).sort((a, b) => coaches[assign[a]].name.localeCompare(coaches[assign[b]].name) || b - a);
   let prev = -1;
   $("rows").innerHTML = order.map((i) => {
-    const j = assign[i], co = coaches[j], ce = coachees[i], s = score[i][j];
+    const j = assign[i], { co, ce, parts, link, score: s } = pairInfo(i);
     const options = coaches.map((c, jj) => ({ c, jj, s: score[i][jj] })).sort((a, b) => b.s - a.s)
-      .map((o) => `<option value="${o.jj}" ${o.jj === j ? "selected" : ""}>${esc(o.c.name)} · ${Math.round(o.s)}</option>`).join("");
-    const tags = M.shared(ce, co, weights).map((p) => `<span><em>${esc(p.label)}:</em> ${esc(p.items.join(", "))}</span>`).join("") || `<span><em>No overlap</em></span>`;
+      .map((o) => `<option value="${o.jj}" ${o.jj === j ? "selected" : ""}>${esc(o.c.name)} (${esc(o.c.cls)}) · ${Math.round(o.s)}</option>`).join("");
+    const tags = parts.map((p) => `<span><em>${esc(p.label)}:</em> ${esc(p.items.join(", "))}</span>`).join("") || `<span><em>No overlap</em></span>`;
     const first = j !== prev; prev = j;
     return `<tr class="${first ? "group-start" : ""}">
-      <td class="who" data-role="Coach"><b>${esc(co.name)}</b><small>${esc(co.email)}</small>
+      <td class="who" data-role="Coach · ${esc(co.cls)}"><b>${esc(co.name)}</b><small>${esc(co.email)}</small>
         <select aria-label="Change coach for ${esc(ce.name)}" data-i="${i}">${options}</select>
         ${state.auto[i] !== j ? '<div class="edited">changed by hand</div>' : ""}</td>
-      <td class="who" data-role="Coachee"><b>${esc(ce.name)}</b><small>${esc(ce.email)}</small></td>
+      <td class="who" data-role="Coachee · ${esc(ce.cls)}"><b>${esc(ce.name)}</b><small>${esc(ce.email)}</small>
+        <a class="teams" href="${esc(link)}" target="_blank" rel="noopener" title="Opens a Teams chat to ${esc(ce.name)} with the intro typed in. Meant for the coach.">Coach's Teams intro link ↗</a></td>
       <td><div class="score"><b>${Math.round(s)}</b><div class="meter"><i style="width:${(100 * s) / maxScore}%;background:${scoreColor(s, pairScores)}"></i></div></div></td>
       <td><div class="tags">${tags}</div></td></tr>`;
   }).join("");
 
   const idle = coaches.filter((_, j) => load[j] === 0).map((c) => c.name);
   $("unmatched").hidden = !idle.length;
-  $("unmatched").textContent = idle.length ? `Coaches without a coachee (more 2029s than 2030s): ${idle.join(", ")}.` : "";
+  $("unmatched").textContent = idle.length ? `Coaches without a coachee (more coaches than coachees): ${idle.join(", ")}.` : "";
   $("export").disabled = !assign.length;
 }
 
@@ -427,8 +518,15 @@ $("rows").addEventListener("change", (e) => {
   state.assign[i] = Number(e.target.value); render();
 });
 $("rerun").onclick = run;
-$("coachClass").onchange = run;
-$("coacheeClass").onchange = run;
+$("template").value = recall("mcm-template") || DEFAULT_TEMPLATE;
+$("template").addEventListener("input", () => { store("mcm-template", $("template").value); if (state.assign.length) render(); });
+
+function loadRows(headers, rows, label, isSample) {
+  const r = M.readPeople(headers, rows);
+  state.people = r.people; state.missing = r.missing; state.roles = {};
+  $("source").textContent = label; $("source").classList.toggle("sample", !!isSample);
+  buildRoles(); run();
+}
 
 async function loadFile(file) {
   try {
@@ -442,9 +540,7 @@ async function loadFile(file) {
       rows.push(vals);
     });
     if (rows.length < 2) throw new Error("The first sheet has no responses.");
-    state.headers = rows[0]; state.rows = rows.slice(1); state.fileName = file.name;
-    $("source").textContent = file.name; $("source").classList.remove("sample");
-    run();
+    loadRows(rows[0], rows.slice(1), file.name, false);
   } catch (err) {
     $("notice").textContent = `Couldn't read that file: ${err.message} Use the .xlsx from Forms → Responses → Open results in Excel (or download a copy).`;
     $("notice").hidden = false;
@@ -457,22 +553,24 @@ drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.ad
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
 drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
 
-$("export").onclick = async () => {
-  const { coaches, coachees, score, assign } = state;
+async function buildMatchesWorkbook() {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Matches");
-  const rows = coachees.map((ce, i) => {
-    const co = coaches[assign[i]];
-    const shared = M.shared(ce, co, weights).map((p) => `${p.label}: ${p.items.join(", ")}`).join(" | ");
-    return [co.name, co.email, ce.name, ce.email, Math.round(score[i][assign[i]]), shared];
+  const rows = state.coachees.map((_, i) => {
+    const { co, ce, parts, message, link, score } = pairInfo(i);
+    return [co.name, co.cls, co.email, ce.name, ce.cls, ce.email, Math.round(score),
+      parts.map((p) => `${p.label}: ${p.items.join(", ")}`).join(" | "), message, link];
   }).sort((a, b) => a[0].localeCompare(b[0]));
   ws.addTable({
     name: "MatchTable", ref: "A1", headerRow: true, style: { theme: "TableStyleMedium2", showRowStripes: true },
-    columns: ["Coach", "Coach Email", "Coachee", "Coachee Email", "Score", "Shared Interests"].map((name) => ({ name })),
+    columns: ["Coach", "Coach Class", "Coach Email", "Coachee", "Coachee Class", "Coachee Email", "Score", "Shared Interests", "Intro Message", "Teams Link"].map((name) => ({ name })),
     rows,
   });
-  [24, 34, 24, 34, 8, 90].forEach((w, k) => (ws.getColumn(k + 1).width = w));
-  const buf = await wb.xlsx.writeBuffer();
+  [22, 11, 32, 22, 13, 32, 8, 70, 70, 40].forEach((w, k) => (ws.getColumn(k + 1).width = w));
+  return wb.xlsx.writeBuffer();
+}
+$("export").onclick = async () => {
+  const buf = await buildMatchesWorkbook();
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
   a.download = "Matches.xlsx"; a.click();
@@ -480,8 +578,7 @@ $("export").onclick = async () => {
 };
 
 buildWeights();
-state.headers = window.SAMPLE_DATA.headers; state.rows = window.SAMPLE_DATA.rows;
-run();
+loadRows(window.SAMPLE_DATA.headers, window.SAMPLE_DATA.rows, "Sample data: fake cadets", true);
 </script>
 </body>
 </html>
