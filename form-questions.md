@@ -27,8 +27,8 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Text**. Required: yes
 - Excel column: `Squadron`
 
-### 5. What do you want help with, or want your coach to focus on? (pick up to 3)
-- Type: **Checkbox (pick up to 3)**. Required: yes
+### 5. What do you want help with, or want your coach to focus on? (pick up to 5)
+- Type: **Checkbox (pick up to 5)**. Required: yes
 - Excel column: `Coaching Focus`
 - Options:
   - Academics & study habits
@@ -145,6 +145,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Entrepreneurship
   - Medicine
   - Law
+  - NGO / nonprofit
   - Not sure yet
 
 ### 11. Opportunities you want to pursue at USAFA
@@ -182,6 +183,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Economics
   - Psychology / leadership
   - Education
+  - Not interested in research
 
 ### 13. In a sentence or two, what topics are you curious about?
 - Type: **Long text**. Required: yes
