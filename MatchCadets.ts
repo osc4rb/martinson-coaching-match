@@ -209,7 +209,7 @@ function sharedText(a: Person, b: Person): string {
 }
 
 function isNoneAnswer(key: string): boolean {
-  return /^(none|n\/a|not sure|undecided|no|other)\b/.test(key);
+  return /^(none|n\/a|not sure|not interested|not planning|undecided|no|other)\b/.test(key);
 }
 
 // ---------- parsing ----------

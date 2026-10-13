@@ -79,7 +79,7 @@
     return inter / (a.size + b.size - inter);
   }
 
-  const isNone = (k) => /^(none|n\/a|not sure|undecided|no|other)\b/.test(k);
+  const isNone = (k) => /^(none|n\/a|not sure|not interested|not planning|undecided|no|other)\b/.test(k);
 
   function similarity(a, b, weights) {
     let total = 0, wsum = 0;
