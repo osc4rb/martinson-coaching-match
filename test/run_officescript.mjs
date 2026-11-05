@@ -112,7 +112,7 @@ const shortTitle: Record<string, string> = {
   "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",
   "Major (if undeclared: majors you're considering) (pick up to 3)": "Major (up to 3 if undecided)",
   "Minor(s) you have or are considering": "Minor",
-  "Grad school / fellowships you're interested in": "Grad school interests",
+  "Grad school / fellowships you're interested in": "Education goal",
   "Air Force / Space Force career fields you're interested in (pick up to 4)": "Career fields you want (up to 4)",
   "Long-term (after your commitment), where do you see yourself?": "Long-term plans",
   "Opportunities you want to pursue at USAFA": "What do you want to do at USAFA?",

@@ -50,7 +50,7 @@ const FIELDS: Field[] = [
   { header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", alt: "What do you want help with?", label: "Coaching focus", weight: 3, isText: false },
   { header: "Major", question: "Major (if undeclared: majors you're considering)", alt: "Major (up to 3 if undecided)", label: "Major", weight: 3, isText: false },
   { header: "Research Areas", question: "Research areas you're interested in", alt: "Research areas (up to 4)", label: "Research", weight: 3, isText: false },
-  { header: "Grad School Plans", question: "Grad school / fellowships you're interested in", alt: "Grad school interests", label: "Grad school", weight: 2, isText: false },
+  { header: "Grad School Plans", question: "Grad school / fellowships you're interested in", alt: "Education goal", label: "Grad school", weight: 2, isText: false },
   { header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", alt: "Career fields you want (up to 4)", label: "AF/SF career", weight: 2, isText: false },
   { header: "Fun", question: "What do you do for fun?", alt: "What do you do for fun?", label: "For fun", weight: 2, isText: false },
   { header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", alt: "Long-term plans", label: "Future path", weight: 1.5, isText: false },

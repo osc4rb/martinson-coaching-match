@@ -80,7 +80,14 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Checkbox**. Required: yes
 - Excel column: `Minor`
 - Options:
-  - Foreign language
+  - Arabic
+  - Chinese
+  - French
+  - German
+  - Japanese
+  - Portuguese
+  - Russian
+  - Spanish
   - Philosophy
   - Religion Studies
   - Space Studies
@@ -89,19 +96,11 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Other
   - None / undecided
 
-### 8. Grad school interests
+### 8. Education goal
 - Type: **Checkbox**. Required: yes
 - Excel column: `Grad School Plans`
 - Options:
-  - Rhodes
-  - Marshall
-  - Fulbright
-  - Truman
-  - Schwarzman
-  - Gates Cambridge
-  - Mitchell
-  - Hertz / NSF GRFP
-  - Master's right after graduation
+  - Master's
   - PhD
   - Medical school
   - Law school
