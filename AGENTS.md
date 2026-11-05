@@ -19,8 +19,11 @@ Goal: as close to zero-touch for the program lead as possible.
 ```
 Microsoft Form -> Forms-synced Excel workbook (school OneDrive)
    |
-   +-- A) Zero-touch (current): Power Automate flow runs Office Script MatchCadets.ts on the
-   |      synced workbook -> for each pair: Teams "create group chat" + flow posts the intro.
+   +-- A) Zero-touch (current): a daily Power Automate flow runs Office Script MatchCadets.ts on the
+   |      synced workbook. On/after the "Match on" date in the workbook's Settings sheet it matches
+   |      each class pairing (default 2027->2029, 2028->2030), returns one group per coach, and the
+   |      flow creates one Teams group chat per coach (coach + all their coachees) and posts the intro.
+   |      It stamps "Chats created at" so later daily runs do nothing.
    |
    +-- B) Manual / offline: download responses .xlsx -> matcher website or run_match.py ->
           Matches.xlsx (table MatchTable) -> older flow sends each coach a Teams deep link
@@ -34,17 +37,20 @@ Microsoft Form -> Forms-synced Excel workbook (school OneDrive)
 - `match_cli.cjs` - runs `site/matcher.js` from the command line on a JSON dump of the Forms export.
 - `run_match.py` - one command: Forms export .xlsx -> JSON -> `match_cli.cjs` -> Matches.xlsx (table
   `MatchTable`, columns Coach..Teams Link) written to the OneDrive folder the flow reads (`--out` overrides).
-- `MatchCadets.ts` - same matching as an Excel Office Script. Reads the first table of the Forms-synced
-  workbook, takes `coachClasses` / `coacheeClasses` params, returns pairs + intro text and writes a
-  "Matches" sheet. Called by the Power Automate flow. Its FIELDS list must stay in sync with `matcher.js`
-  and the form question text.
+- `MatchCadets.ts` - same matching as an Excel Office Script. Reads the form responses table and the
+  "Settings" sheet (created with defaults on first run: class pairings A5:B16, question weights D5:E16,
+  Match on H5, max coachees per coach H6, "Chats created at" stamp H7). Param `runNow` ("yes" = ignore
+  date/stamp, for tests). Returns one group per coach (memberEmails "coach;coachee;...", chatTitle,
+  intro HTML) and writes a "Matches" sheet. Installed by writing `MatchCadets.osts` (JSON with body +
+  hand-written parameterInfo/returnSchema) to OneDrive `Documents/Office Scripts/`; Power Automate
+  reads the schema from it. Its FIELDS list must stay in sync with `matcher.js` and the form text.
 - `form-questions.md` - the form's questions/options; the live form matches it.
 - `build_files.py` - regenerates the question sheet, `Martinson_Matching_TEMPLATE.xlsx` (blank) and
   `Martinson_Matching_SAMPLE.xlsx` (randomly generated fake people, `@example.com`).
 - `Matches_EMPTY.xlsx` - placeholder Matches workbook (header + `MatchTable`, no rows).
 - `test/` - Node tests (see below). `sample.json` is fake data.
 
-Matching: per-question Jaccard overlap, weighted (focus/major/research 3; grad school/career/fun 2;
+Matching (Office Script = per class pairing; one coach takes several coachees): per-question Jaccard overlap, weighted (focus/major/research 3; grad school/career/fun 2;
 future path/opportunities/research keywords 1.5; minor 1); free-text research compared by shared keywords;
 Hungarian algorithm maximizes total score; every coach gets one coachee before anyone gets two; loads differ
 by at most ceil(coachees/coaches). Default roles: youngest class is coached, every older class coaches.
@@ -57,12 +63,12 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
 - Tests (these three pass as of 2026-10-29):
   - `node test/test_matcher.cjs` - matcher logic, Teams link, Hungarian optimality on random cases
   - `node test/test_forms_headers.cjs` - real Forms export headers map to fields
-  - `node test/run_officescript.mjs` - runs MatchCadets.ts against a fake Forms-shaped workbook
-- `node test/run_test.mjs` is STALE: its fake workbook only has `getTable("Responses")`, but the script
-  now calls `getTables()` (since b66079e), so it fails. Use `run_officescript.mjs`.
+  - `node test/run_officescript.mjs` - runs MatchCadets.ts against a fake Forms-shaped workbook with a
+    simulated Settings sheet (13 checks: date gate, no duplicate runs, pairings, even loads, cap, weights)
 
 ## Conventions
-- Branch `main`; small descriptive commits; agent commits end with a Co-Authored-By line.
+- Branch `main`; small descriptive commits. The owner (osc4rb) is the sole author and contributor:
+  NEVER add Co-Authored-By / "Generated with" AI attribution lines to commits, PRs or docs.
 - Matching logic lives in `site/matcher.js` (site + CLI) and is mirrored in `MatchCadets.ts`; change both
   and `form-questions.md` together, then run all tests and `python build_site.py`.
 - Header lookup accepts both short column names and the start of the Forms question text, so question
@@ -86,6 +92,10 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
 - 2026-10-13 Form feedback: coaching focus up to 5, NGO/nonprofit option, "not interested in research" option.
 - 2026-10-13 Switched to zero-touch: flow runs MatchCadets.ts on the Forms-synced workbook and creates a
   Teams group chat per pair with the intro posted by the flow - replaces "coach sends a deep link".
+- 2026-11-05 Pairings 2027->2029 and 2028->2030, several coachees per coach, ONE group chat per coach
+  (coach + all coachees). Weights/pairings/date are editable on the workbook's Settings sheet so the
+  lead never edits code or the flow. Flow runs daily and acts only on/after the date, once.
+- 2026-11-05 Owner is the sole contributor: AI co-author trailers were stripped from all history.
 - Power Automate flows are built in the classic designer - the new designer's side panel was unreliable.
 
 ## Do not touch
