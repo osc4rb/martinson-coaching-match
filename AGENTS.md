@@ -41,7 +41,9 @@ Microsoft Form -> Forms-synced Excel workbook (school OneDrive)
   "Settings" sheet (created with defaults on first run: class pairings A5:B16, question weights D5:E16,
   Match on H5, max coachees per coach H6, "Chats created at" stamp H7). Param `runNow` ("yes" = ignore
   date/stamp, for tests). Returns one group per coach (memberEmails "coach;coachee;...", chatTitle,
-  intro HTML) and writes a "Matches" sheet. Installed by writing `MatchCadets.osts` (JSON with body +
+  intro HTML) and writes a "Matches" sheet. Before the date every run rewrites "Matches" as a
+  PREVIEW (A1 says so; pairs from row 4) and returns nothing; on the date it creates chats once and
+  the sheet becomes the record ("Group chats created ..."). Installed by writing `MatchCadets.osts` (JSON with body +
   hand-written parameterInfo/returnSchema) to OneDrive `Documents/Office Scripts/`; Power Automate
   reads the schema from it. Its FIELDS list must stay in sync with `matcher.js` and the form text.
 - `form-questions.md` - the form's questions/options; the live form matches it.
@@ -64,7 +66,7 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
   - `node test/test_matcher.cjs` - matcher logic, Teams link, Hungarian optimality on random cases
   - `node test/test_forms_headers.cjs` - real Forms export headers map to fields
   - `node test/run_officescript.mjs` - runs MatchCadets.ts against a fake Forms-shaped workbook with a
-    simulated Settings sheet (16 checks: date gate, no duplicate runs, pairings, even loads, cap, weights)
+    simulated Settings sheet (21 checks: date gate, preview, no duplicate runs, pairings, even loads, cap, weights)
 
 ## Conventions
 - Branch `main`; small descriptive commits. The owner (osc4rb) is the sole author and contributor:
@@ -99,6 +101,13 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
 - 2026-11-05 Office Script rules learned from the live cloud run: never call workbook APIs inside
   array callbacks (`.filter`/`.map` -> runtime `filterAsync is not a function`; use plain loops), and
   never put `:` in Teams chat titles (Create a chat rejects it).
+- 2026-11-05 Teams makes the flow owner a member of every chat it creates, and the standard Teams
+  connector cannot remove members (its Graph action only allows /me, /users, /teams; Graph removes
+  chat members only via /chats/...). So the owner stays in every chat. The flow's "Members to add" is an
+  expression that drops the owner's own email from memberEmails, else Create a chat fails with
+  "Duplicate chat members" when the owner is also a participant.
+- 2026-11-05 Classic designer gotchas: text typed as @{...} into a token field may be saved as literal
+  text; insert expressions via the Expression tab (only shown when the designer is wide, ~1400px).
 - Power Automate flows are built in the classic designer - the new designer's side panel was unreliable.
 
 ## Do not touch

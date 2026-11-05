@@ -78,7 +78,11 @@ check(main(wb, "").length === 0, "blank match date: nothing happens");
 check(settings().getRange("A5:B6").getValues().map((r: any) => r.join(">")).join(",") === "2027>2029,2028>2030", "default pairings 2027>2029, 2028>2030");
 
 set("H5", "2999-01-01");
-check(main(wb, "").length === 0, "future match date: nothing happens");
+check(main(wb, "").length === 0, "future match date: no chats returned");
+const mws = () => sheets.get("Matches");
+check(!!mws() && /^PREVIEW ONLY/.test(String(mws().getRange("A1").getValues()[0][0])) && String(mws().getRange("A1").getValues()[0][0]).indexOf("01/01/2999") >= 0, "before the date: Matches sheet says PREVIEW ONLY + the date");
+check(String(mws().getRange("A3").getValues()[0][0]) === "Coach" && String(mws().getRange("A4").getValues()[0][0]).length > 0, "preview lists the would-be pairs (header row 3, pairs from row 4)");
+check(String(settings().getRange("H7").getValues()[0][0]) === "", "preview does not stamp 'Chats created at'");
 
 set("H5", "2020-01-01");
 g = main(wb, "");
@@ -90,7 +94,9 @@ check(Math.max(...g.map((x: any) => x.coacheeCount)) - Math.min(...g.map((x: any
 check(g.every((x: any) => x.memberEmails.split(";").length === x.coacheeCount + 1), "chat members = coach + their coachees");
 check(g.every((x: any) => x.chatTitle.indexOf(":") < 0), "chat titles have no ':' (Teams rejects it)");
 check(String(settings().getRange("H7").getValues()[0][0]).length > 0, "run stamps 'Chats created at'");
+check(/^Group chats created/.test(String(mws().getRange("A1").getValues()[0][0])), "on the date: Matches sheet says 'Group chats created'");
 check(main(wb, "").length === 0, "second daily run does nothing (no duplicate chats)");
+check(/^Group chats created/.test(String(mws().getRange("A1").getValues()[0][0])), "after chats exist, the Matches record is left alone");
 check(main(wb, "yes").length === 6, "runNow=yes ignores the date/stamp (test runs)");
 
 set("H6", 2);

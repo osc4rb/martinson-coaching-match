@@ -66,14 +66,16 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const force = String(runNow === undefined || runNow === null ? "" : runNow).trim().toLowerCase() === "yes";
   console.log(`runNow=${JSON.stringify(runNow)} force=${force} matchOn=${settings.matchOn} today=${mountainToday()} sentAt=${settings.sentAt} pairings=${JSON.stringify(settings.pairings)}`);
 
-  if (!force) {
-    if (settings.matchOn === null) return [];
-    if (mountainToday() < settings.matchOn) return [];
-    if (settings.sentAt) return [];
-  }
+  // Chats already created: leave the Matches sheet as the record of what was sent.
+  if (!force && settings.sentAt) return [];
+  // "due" = create the chats now. Otherwise only refresh the Matches sheet as a preview.
+  const due = force || (settings.matchOn !== null && mountainToday() >= settings.matchOn);
 
   const responses = findResponsesTable(workbook);
-  if (!responses) throw new Error("Couldn't find the form responses table in this workbook.");
+  if (!responses) {
+    if (!due) return [];
+    throw new Error("Couldn't find the form responses table in this workbook.");
+  }
   const people = readPeople(responses);
   console.log(`responses=${people.length} classes=${people.map((p) => p.cls).join(",")}`);
 
@@ -114,7 +116,13 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
     });
   }
 
-  writeMatches(workbook, rows);
+  const now = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
+  if (!due) {
+    const on = settings.matchOn === null ? "the 'Match on' date (Settings!H5 is blank)" : dayText(settings.matchOn);
+    writeMatches(workbook, rows, `PREVIEW ONLY (updated ${now}) - nothing has been sent. Group chats are created on ${on}.`);
+    return [];
+  }
+  writeMatches(workbook, rows, `Group chats created ${now}.`);
   if (groups.length > 0) stampSent(workbook);
   return groups;
 }
@@ -208,6 +216,13 @@ function toDayNumber(v: string | number | boolean): number | null {
   const t = Date.parse(s);
   if (isNaN(t)) return null;
   return Math.floor(t / 86400000) + 25569;
+}
+
+// Excel day number -> "mm/dd/yyyy".
+function dayText(day: number): string {
+  const d = new Date((day - 25569) * 86400000);
+  const two = (n: number) => (n < 10 ? "0" : "") + n;
+  return `${two(d.getUTCMonth() + 1)}/${two(d.getUTCDate())}/${d.getUTCFullYear()}`;
 }
 
 // Today's date in Mountain time as an Excel day number (the service runs in UTC).
@@ -448,13 +463,15 @@ function nameFromEmail(email: string): string {
   return local.split(/[._]/).filter((x) => x.length > 0).map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(" ");
 }
 
-function writeMatches(workbook: ExcelScript.Workbook, rows: (string | number)[][]) {
+function writeMatches(workbook: ExcelScript.Workbook, rows: (string | number)[][], status: string) {
   const old = workbook.getWorksheet(MATCHES_SHEET);
   if (old) old.delete();
   const ws = workbook.addWorksheet(MATCHES_SHEET);
+  ws.getRange("A1").setValue(status);
+  ws.getRange("A1").getFormat().getFont().setBold(true);
   const values: (string | number)[][] = [["Coach", "Coach Class", "Coach Email", "Coachee", "Coachee Class", "Coachee Email", "Score", "In common"]];
   for (const r of rows) values.push(r);
-  const range = ws.getRangeByIndexes(0, 0, values.length, values[0].length);
+  const range = ws.getRangeByIndexes(2, 0, values.length, values[0].length);
   range.setValues(values);
   range.getFormat().autofitColumns();
 }

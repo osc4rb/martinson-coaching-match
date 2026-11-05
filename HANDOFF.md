@@ -8,46 +8,38 @@ Zero-touch coaching match: the program lead only posts the form link in their Te
 match date (Tue 2026-11-17, flow fires daily ~1:30 PM Mountain) the flow matches 2027->2029 and
 2028->2030 (several coachees per coach) and creates one Teams group chat per coach with an intro.
 
-## Done (all verified 2026-11-05)
-- `MatchCadets.ts`: class pairings, balanced multi-coachee Hungarian matching, Settings sheet
-  (pairings A5:B16, weights D5:E16, Match on H5 = 11/17/2026, max per coach H6, "Chats created at" H7),
-  names cleaned from school email, one group per coach. Installed in OneDrive as `MatchCadets.osts`.
-- Two cloud-only bugs found by the live test and fixed: (1) no workbook API calls inside array
-  callbacks (runtime error `filterAsync is not a function`); (2) Teams rejects `:` in chat titles,
-  so titles are "MHP Coaching - <coach>".
-- Live end-to-end test on a TEST workbook (2 volunteers): group chat created with coach + coachee
-  (+ flow owner), intro posted by Workflows. Post step needed ~5 min of automatic retries while the
-  new chat came online; it succeeded.
-- Production flow (scheduled, On) now points at the real Forms-synced workbook; runNow blank. A test
-  run on the real workbook succeeded and correctly did nothing (before match date).
-- The two older Martinson flows are turned Off.
-- `test/run_officescript.mjs`: 16 checks, all pass; other tests pass.
-- GitHub: only the owner shows as contributor (see AGENTS.md Conventions).
-
-## In progress
-- Nothing mid-flight.
+## Done (all verified live 2026-11-05)
+- `MatchCadets.ts`: pairings, balanced multi-coachee matching, Settings sheet, one group per coach,
+  intro without the "meet this week" line. Before the date each run refreshes a "Matches" PREVIEW
+  sheet in the workbook (nothing sent); on the date chats are created once and stamped.
+- Flow (scheduled, On, real Forms-synced workbook, runNow blank): Run script -> Apply to each ->
+  Create a chat (members = memberEmails minus the flow owner, via expression) -> Post message.
+- Live tests: 1 coach + 1 coachee chat; 1 coach + 2 coachees with the flow owner as a coachee
+  (needed the owner-exclusion fix - Teams rejected duplicate members). Both created + intro posted.
+- Tried auto-removing the flow owner from chats they aren't in: impossible with the standard Teams
+  connector (see AGENTS.md Decisions). Owner stays in every chat.
+- Real-workbook run before the date: returned nothing, wrote the preview. It currently has 1 response
+  (class 2027) - likely an old test submission; the lead should confirm/delete it.
+- Old Martinson flows are Off. Tests: 21 Office Script checks + matcher tests pass.
 
 ## Next steps
-1. Lead posts the form link in the channel; responses flow into the synced workbook automatically.
-2. On/after 2026-11-17 13:30 MT check the flow's run history once; the Settings sheet's
-   "Chats created at" cell gets stamped when chats are created.
-3. To rerun after a change: clear Settings!H7 in the real workbook.
-4. Optional: owner deletes the `*-old-delete-me` private repos on GitHub.
+1. Lead posts the form link; checks the workbook's Matches tab any time for the preview.
+2. Lead removes any test responses from the real workbook/form before 11/17.
+3. On/after 2026-11-17 13:30 MT check the run history; Settings!H7 gets stamped.
+4. Optional cleanup: test workbooks "MHP Match TEST*.xlsx" in OneDrive; test chats in Teams.
 
 ## Open questions / blockers
-- Office Script `runNow` parameter arrives undefined at runtime (hand-written parameterInfo in
-  .osts). Not needed in production: the Settings date controls everything. For a forced test,
-  temporarily install a copy of the script with `force = true`, run, then reinstall the real one.
+- Office Script `runNow` parameter arrives undefined at runtime. For a forced test, temporarily
+  install a copy of the script with `force = true`, run, then reinstall the real one.
+- Edge case: if the flow owner is a coach with exactly one coachee, the chat would be 1:1 (untested).
 
 ## Commands that matter
 - `node test/test_matcher.cjs; node test/test_forms_headers.cjs; node test/run_officescript.mjs`
 - `python build_site.py` (rebuild `docs/index.html` after editing `site/`)
-- `python run_match.py <responses.xlsx> --coach 2029 --coachee 2030` (offline fallback)
 - Reinstall script after editing: `.osts` body = `MatchCadets.ts` verbatim (keep parameterInfo/apiInfo).
 
 ## Machine / hardware notes
-- Microsoft 365 parts (Form, workbook, script, flows, Teams) are only reachable from the gov laptop's
-  school account. Built-in browser pane in the Claude desktop app is signed in there.
+- Microsoft 365 parts are only reachable from the gov laptop's school account (built-in browser pane).
 - Commit as the owner's GitHub noreply address (`git config user.email` is already set in this repo).
 
 ## Session pointers
