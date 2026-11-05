@@ -33,7 +33,7 @@ const classIdx = keep.findIndex(([h]: any) => h === "Class Year");
 const rows = s.rows.map((r: any[], k: number) => {
   const vals = (keep as any).map(([h, i]: any) => toForms(String(r[i])));
   vals[classIdx] = cls(k);
-  return [String(k + 1), "", "", "c" + k + "@example.com", k % 4 === 0 ? "" : "Person " + k, "", ...vals];
+  return [String(k + 1), "", "", k === 0 ? "C27Jane.Doe@example.com" : "c" + k + "@example.com", k === 0 ? "Doe, Jane Q C1C USAF USAFA CW/CS01" : (k % 4 === 0 ? "" : "Person " + k), "", ...vals];
 });
 
 // --- tiny cell store so the script can read/write sheet ranges ---
@@ -72,7 +72,9 @@ let fails = 0;
 const check = (ok: boolean, msg: string) => { console.log((ok ? "PASS " : "FAIL ") + msg); if (!ok) fails++; };
 
 let g = main(wb, "");
-check(g.length === 0 && !!settings(), "first run creates Settings and does nothing without a match date");
+check(!!settings() && String(settings().getRange("H5").getValues()[0][0]) === "11/17/2026", "first run creates Settings with match date 11/17/2026 pre-filled");
+set("H5", "");
+check(main(wb, "").length === 0, "blank match date: nothing happens");
 check(settings().getRange("A5:B6").getValues().map((r: any) => r.join(">")).join(",") === "2027>2029,2028>2030", "default pairings 2027>2029, 2028>2030");
 
 set("H5", "2999-01-01");

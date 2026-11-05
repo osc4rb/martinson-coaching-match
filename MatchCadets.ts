@@ -59,6 +59,7 @@ const FIELDS: Field[] = [
 ];
 
 const DEFAULT_PAIRINGS: string[][] = [["2027", "2029"], ["2028", "2030"]];
+const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the lead can change it there
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -188,6 +189,7 @@ function createSettings(workbook: ExcelScript.Workbook): ExcelScript.Worksheet {
   for (const a of ["A4:B4", "D4:E4", "G4:H4"]) ws.getRange(a).getFormat().getFont().setBold(true);
   for (const a of ["A5:B16", "E5:E16", "H5:H6"]) ws.getRange(a).getFormat().getFill().setColor("#FFF2CC");
   ws.getRange("H5").setNumberFormatLocal("mm/dd/yyyy");
+  ws.getRange("H5").setValue(DEFAULT_MATCH_ON);
   ws.getRange("A:H").getFormat().autofitColumns();
   return ws;
 }
@@ -236,8 +238,11 @@ function readPeople(table: ExcelScript.Table): Person[] {
   for (const row of rows) {
     const email = String(row[emailCol]).trim();
     if (!email || email.indexOf("@") < 0) continue;
+    // Forms records the Teams display name ("Last, First M C3C USAF ..."); a name built from the
+    // school email ("C29First.Last@...") reads better, so prefer that when the email has that shape.
     let name = nameCol >= 0 ? String(row[nameCol]).trim() : "";
-    if (!name || name.toLowerCase() === "anonymous") name = nameFromEmail(email);
+    const fromEmail = nameFromEmail(email);
+    if (/\./.test(email.split("@")[0]) || !name || name.toLowerCase() === "anonymous") name = fromEmail;
     byEmail.set(email.toLowerCase(), {
       name: name,
       email: email,
