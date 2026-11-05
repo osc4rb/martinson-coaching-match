@@ -41,9 +41,9 @@ Microsoft Form -> Forms-synced Excel workbook (school OneDrive)
   "Settings" sheet (created with defaults on first run: class pairings A5:B16, question weights D5:E16,
   Match on H5, max coachees per coach H6, "Chats created at" stamp H7). Param `runNow` ("yes" = ignore
   date/stamp, for tests). Returns one group per coach (memberEmails "coach;coachee;...", chatTitle,
-  intro HTML) and writes a "Matches" sheet. Before the date every run rewrites "Matches" as a
-  PREVIEW (A1 says so; pairs from row 4) and returns nothing; on the date it creates chats once and
-  the sheet becomes the record ("Group chats created ..."). Installed by writing `MatchCadets.osts` (JSON with body +
+  intro HTML) and writes a "Matches" sheet (plain table, no status text). Before the date every run
+  rewrites "Matches" with the would-be pairs and returns nothing; on the date it creates chats once
+  and the sheet is then left as the record. Installed by writing `MatchCadets.osts` (JSON with body +
   hand-written parameterInfo/returnSchema) to OneDrive `Documents/Office Scripts/`; Power Automate
   reads the schema from it. Its FIELDS list must stay in sync with `matcher.js` and the form text.
 - `form-questions.md` - the form's questions/options; the live form matches it.
@@ -66,7 +66,7 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
   - `node test/test_matcher.cjs` - matcher logic, Teams link, Hungarian optimality on random cases
   - `node test/test_forms_headers.cjs` - real Forms export headers map to fields
   - `node test/run_officescript.mjs` - runs MatchCadets.ts against a fake Forms-shaped workbook with a
-    simulated Settings sheet (21 checks: date gate, preview, no duplicate runs, pairings, even loads, cap, weights)
+    simulated Settings sheet (22 checks: date gate, preview, short/old question titles, no duplicate runs, pairings, even loads, cap, weights)
 
 ## Conventions
 - Branch `main`; small descriptive commits. The owner (osc4rb) is the sole author and contributor:
@@ -108,6 +108,9 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
   "Duplicate chat members" when the owner is also a participant.
 - 2026-11-05 Classic designer gotchas: text typed as @{...} into a token field may be saved as literal
   text; insert expressions via the Expression tab (only shown when the designer is wide, ~1400px).
+- 2026-11-05 Owner wants no generated text except the Teams intro and the form questions: no
+  status lines in the workbook. Form questions were shortened; the synced workbook keeps the old
+  column headers, so FIELDS match both `alt` (current wording) and `question` (old wording).
 - Power Automate flows are built in the classic designer - the new designer's side panel was unreliable.
 
 ## Do not touch

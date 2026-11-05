@@ -27,7 +27,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
 - Type: **Text**. Required: yes
 - Excel column: `Squadron`
 
-### 5. What do you want help with, or want your coach to focus on? (pick up to 5)
+### 5. What do you want help with? (up to 5)
 - Type: **Checkbox (pick up to 5)**. Required: yes
 - Excel column: `Coaching Focus`
 - Options:
@@ -42,7 +42,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Time management
   - Wellness & balance
 
-### 6. Major (if undeclared: majors you're considering)
+### 6. Major (up to 3 if undecided)
 - Type: **Checkbox (pick up to 3)**. Required: yes
 - Excel column: `Major`
 - Options:
@@ -76,7 +76,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Systems Engineering
   - Undecided
 
-### 7. Minor(s) you have or are considering
+### 7. Minor
 - Type: **Checkbox**. Required: yes
 - Excel column: `Minor`
 - Options:
@@ -89,7 +89,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Other
   - None / undecided
 
-### 8. Grad school / fellowships you're interested in
+### 8. Grad school interests
 - Type: **Checkbox**. Required: yes
 - Excel column: `Grad School Plans`
 - Options:
@@ -108,7 +108,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Not sure yet
   - Not planning grad school
 
-### 9. Air Force / Space Force career fields you're interested in
+### 9. Career fields you want (up to 4)
 - Type: **Checkbox (pick up to 4)**. Required: yes
 - Excel column: `AF Career Interests`
 - Options:
@@ -134,7 +134,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Public Affairs
   - Undecided
 
-### 10. Long-term (after your commitment), where do you see yourself?
+### 10. Long-term plans
 - Type: **Checkbox**. Required: yes
 - Excel column: `Future Path`
 - Options:
@@ -148,7 +148,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - NGO / nonprofit
   - Not sure yet
 
-### 11. Opportunities you want to pursue at USAFA
+### 11. What do you want to do at USAFA?
 - Type: **Checkbox**. Required: yes
 - Excel column: `Opportunities`
 - Options:
@@ -163,7 +163,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Publishing research
   - Conferences / presenting
 
-### 12. Research areas you're interested in
+### 12. Research areas (up to 4)
 - Type: **Checkbox (pick up to 4)**. Required: yes
 - Excel column: `Research Areas`
 - Options:
@@ -185,7 +185,7 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Education
   - Not interested in research
 
-### 13. In a sentence or two, what topics are you curious about?
+### 13. What are you curious about?
 - Type: **Long text**. Required: yes
 - Excel column: `Research Interests`
 
@@ -211,6 +211,6 @@ Settings (... > Settings): *Only people in my organization can respond*, *Record
   - Film / TV
   - Chess / board games
 
-### 15. Anything else your coach/coachee should know? (not used for matching)  _(not scored)_
+### 15. Anything else? (optional)  _(not scored)_
 - Type: **Long text**. Required: no
 - Excel column: `Anything Else`

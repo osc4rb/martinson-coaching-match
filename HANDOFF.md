@@ -10,8 +10,10 @@ match date (Tue 2026-11-17, flow fires daily ~1:30 PM Mountain) the flow matches
 
 ## Done (all verified live 2026-11-05)
 - `MatchCadets.ts`: pairings, balanced multi-coachee matching, Settings sheet, one group per coach,
-  intro without the "meet this week" line. Before the date each run refreshes a "Matches" PREVIEW
-  sheet in the workbook (nothing sent); on the date chats are created once and stamped.
+  intro without the "meet this week" line. Before the date each run refreshes the "Matches" sheet
+  with the would-be pairs (plain table, no status text; nothing sent); on the date chats are created
+  once and stamped.
+- Form questions shortened (live form verified via the forms API); script reads old + new headers.
 - Flow (scheduled, On, real Forms-synced workbook, runNow blank): Run script -> Apply to each ->
   Create a chat (members = memberEmails minus the flow owner, via expression) -> Post message.
 - Live tests: 1 coach + 1 coachee chat; 1 coach + 2 coachees with the flow owner as a coachee
@@ -20,7 +22,7 @@ match date (Tue 2026-11-17, flow fires daily ~1:30 PM Mountain) the flow matches
   connector (see AGENTS.md Decisions). Owner stays in every chat.
 - Real-workbook run before the date: returned nothing, wrote the preview. It currently has 1 response
   (class 2027) - likely an old test submission; the lead should confirm/delete it.
-- Old Martinson flows are Off. Tests: 21 Office Script checks + matcher tests pass.
+- Old Martinson flows are Off. Tests: 22 Office Script checks + matcher tests pass.
 
 ## Next steps
 1. Lead posts the form link; checks the workbook's Matches tab any time for the preview.

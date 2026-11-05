@@ -6,16 +6,16 @@
   // header: short column name (Power Automate workbook)
   // question: the Microsoft Forms question text (Forms "Open in Excel" export)
   const FIELDS = [
-    { key: "focus", header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", label: "Coaching focus", weight: 3, kind: "list" },
-    { key: "major", header: "Major", question: "Major (if undeclared: majors you're considering)", label: "Major", weight: 3, kind: "list" },
-    { key: "research", header: "Research Areas", question: "Research areas you're interested in", label: "Research", weight: 3, kind: "list" },
-    { key: "grad", header: "Grad School Plans", question: "Grad school / fellowships you're interested in", label: "Grad school", weight: 2, kind: "list" },
-    { key: "career", header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", label: "AF/SF career", weight: 2, kind: "list" },
-    { key: "fun", header: "Fun", question: "What do you do for fun?", label: "For fun", weight: 2, kind: "list" },
-    { key: "future", header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", label: "Future path", weight: 1.5, kind: "list" },
-    { key: "opps", header: "Opportunities", question: "Opportunities you want to pursue at USAFA", label: "Opportunities", weight: 1.5, kind: "list" },
-    { key: "text", header: "Research Interests", question: "In a sentence or two, what topics are you curious about?", label: "Research keywords", weight: 1.5, kind: "text" },
-    { key: "minor", header: "Minor", question: "Minor(s) you have or are considering", label: "Minor", weight: 1, kind: "list" },
+    { key: "focus", header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", alt: "What do you want help with?", label: "Coaching focus", weight: 3, kind: "list" },
+    { key: "major", header: "Major", question: "Major (if undeclared: majors you're considering)", alt: "Major (up to 3 if undecided)", label: "Major", weight: 3, kind: "list" },
+    { key: "research", header: "Research Areas", question: "Research areas you're interested in", alt: "Research areas (up to 4)", label: "Research", weight: 3, kind: "list" },
+    { key: "grad", header: "Grad School Plans", question: "Grad school / fellowships you're interested in", alt: "Grad school interests", label: "Grad school", weight: 2, kind: "list" },
+    { key: "career", header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", alt: "Career fields you want (up to 4)", label: "AF/SF career", weight: 2, kind: "list" },
+    { key: "fun", header: "Fun", question: "What do you do for fun?", alt: "What do you do for fun?", label: "For fun", weight: 2, kind: "list" },
+    { key: "future", header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", alt: "Long-term plans", label: "Future path", weight: 1.5, kind: "list" },
+    { key: "opps", header: "Opportunities", question: "Opportunities you want to pursue at USAFA", alt: "What do you want to do at USAFA?", label: "Opportunities", weight: 1.5, kind: "list" },
+    { key: "text", header: "Research Interests", question: "In a sentence or two, what topics are you curious about?", alt: "What are you curious about?", label: "Research keywords", weight: 1.5, kind: "text" },
+    { key: "minor", header: "Minor", question: "Minor(s) you have or are considering", alt: "Minor", label: "Minor", weight: 1, kind: "list" },
   ];
   const ID_COLS = {
     name: ["Name", "Full name"],
@@ -147,7 +147,7 @@
       email: findColumn(headers, ID_COLS.email),
       classYear: findColumn(headers, ID_COLS.classYear),
     };
-    const fieldCols = FIELDS.map((f) => findColumn(headers, [f.header, f.question]));
+    const fieldCols = FIELDS.map((f) => findColumn(headers, [f.header, f.alt, f.question]));
     const missing = [];
     if (cols.name < 0) missing.push("Name");
     if (cols.email < 0) missing.push("Email");

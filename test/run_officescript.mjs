@@ -73,6 +73,7 @@ const check = (ok: boolean, msg: string) => { console.log((ok ? "PASS " : "FAIL 
 
 let g = main(wb, "");
 check(!!settings() && String(settings().getRange("H5").getValues()[0][0]) === "11/17/2026", "first run creates Settings with match date 11/17/2026 pre-filled");
+check(String(settings().getRange("A1").getValues()[0][0]) === "", "Settings sheet has no extra instruction text");
 set("H5", "");
 check(main(wb, "").length === 0, "blank match date: nothing happens");
 check(settings().getRange("A5:B6").getValues().map((r: any) => r.join(">")).join(",") === "2027>2029,2028>2030", "default pairings 2027>2029, 2028>2030");
@@ -80,8 +81,7 @@ check(settings().getRange("A5:B6").getValues().map((r: any) => r.join(">")).join
 set("H5", "2999-01-01");
 check(main(wb, "").length === 0, "future match date: no chats returned");
 const mws = () => sheets.get("Matches");
-check(!!mws() && /^PREVIEW ONLY/.test(String(mws().getRange("A1").getValues()[0][0])) && String(mws().getRange("A1").getValues()[0][0]).indexOf("01/01/2999") >= 0, "before the date: Matches sheet says PREVIEW ONLY + the date");
-check(String(mws().getRange("A3").getValues()[0][0]) === "Coach" && String(mws().getRange("A4").getValues()[0][0]).length > 0, "preview lists the would-be pairs (header row 3, pairs from row 4)");
+check(!!mws() && String(mws().getRange("A1").getValues()[0][0]) === "Coach" && String(mws().getRange("A2").getValues()[0][0]).length > 0, "before the date: Matches sheet lists the would-be pairs (no extra text)");
 check(String(settings().getRange("H7").getValues()[0][0]) === "", "preview does not stamp 'Chats created at'");
 
 set("H5", "2020-01-01");
@@ -94,9 +94,8 @@ check(Math.max(...g.map((x: any) => x.coacheeCount)) - Math.min(...g.map((x: any
 check(g.every((x: any) => x.memberEmails.split(";").length === x.coacheeCount + 1), "chat members = coach + their coachees");
 check(g.every((x: any) => x.chatTitle.indexOf(":") < 0), "chat titles have no ':' (Teams rejects it)");
 check(String(settings().getRange("H7").getValues()[0][0]).length > 0, "run stamps 'Chats created at'");
-check(/^Group chats created/.test(String(mws().getRange("A1").getValues()[0][0])), "on the date: Matches sheet says 'Group chats created'");
 check(main(wb, "").length === 0, "second daily run does nothing (no duplicate chats)");
-check(/^Group chats created/.test(String(mws().getRange("A1").getValues()[0][0])), "after chats exist, the Matches record is left alone");
+check(String(mws().getRange("A1").getValues()[0][0]) === "Coach", "after chats exist, the Matches record is left alone");
 check(main(wb, "yes").length === 6, "runNow=yes ignores the date/stamp (test runs)");
 
 set("H6", 2);
@@ -108,6 +107,24 @@ settings().getRange("E5:E16").setValues([[0],[0],[0],[0],[0],[0],[0],[0],[0],[5]
 g = main(wb, "yes");
 check(g.length === 6 && g.every((x: any) => !/Coaching focus|Major:/.test(x.intro)), "weights from Settings are used (0 = ignored)");
 check(g.some((x: any) => x.coachName === "Jane Doe"), "Teams-style display name becomes 'Jane Doe' from the school email");
+// The live form was reworded to short titles; matching must not change.
+const shortTitle: Record<string, string> = {
+  "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",
+  "Major (if undeclared: majors you're considering) (pick up to 3)": "Major (up to 3 if undecided)",
+  "Minor(s) you have or are considering": "Minor",
+  "Grad school / fellowships you're interested in": "Grad school interests",
+  "Air Force / Space Force career fields you're interested in (pick up to 4)": "Career fields you want (up to 4)",
+  "Long-term (after your commitment), where do you see yourself?": "Long-term plans",
+  "Opportunities you want to pursue at USAFA": "What do you want to do at USAFA?",
+  "Research areas you're interested in (pick up to 4)": "Research areas (up to 4)",
+  "In a sentence or two, what topics are you curious about?": "What are you curious about?",
+};
+settings().getRange("E5:E16").setValues([[3],[3],[3],[2],[2],[2],[1.5],[1.5],[1.5],[1],[""],[""]]);
+const before = JSON.stringify(main(wb, "yes"));
+let swapped = 0;
+for (let i = 0; i < headers.length; i++) if (shortTitle[headers[i]]) { headers[i] = shortTitle[headers[i]]; swapped++; }
+const after = JSON.stringify(main(wb, "yes"));
+check(swapped === 9 && before === after, "short question titles give the same matches as the old wording (" + swapped + " renamed)");
 console.log("\\nexample intro:\\n" + g[0].intro.replace(/<br>|<\\/p>/g, "\\n").replace(/<[^>]+>/g, "").replace(/&bull;/g, "-"));
 console.log(fails === 0 ? "\\nALL PASS" : "\\n" + fails + " FAILED");
 `;

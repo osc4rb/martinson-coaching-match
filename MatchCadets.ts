@@ -29,6 +29,7 @@ interface Group {
 interface Field {
   header: string;
   question: string;
+  alt: string; // current (short) form wording; `question` = older wording, still matched
   label: string;
   weight: number;
   isText: boolean;
@@ -44,18 +45,18 @@ interface Person {
 const SETTINGS_SHEET = "Settings";
 const MATCHES_SHEET = "Matches";
 
-// header = short column name; question = start of the Forms question text.
+// header = short column name; alt = current form question text; question = older form wording.
 const FIELDS: Field[] = [
-  { header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", label: "Coaching focus", weight: 3, isText: false },
-  { header: "Major", question: "Major (if undeclared: majors you're considering)", label: "Major", weight: 3, isText: false },
-  { header: "Research Areas", question: "Research areas you're interested in", label: "Research", weight: 3, isText: false },
-  { header: "Grad School Plans", question: "Grad school / fellowships you're interested in", label: "Grad school", weight: 2, isText: false },
-  { header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", label: "AF/SF career", weight: 2, isText: false },
-  { header: "Fun", question: "What do you do for fun?", label: "For fun", weight: 2, isText: false },
-  { header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", label: "Future path", weight: 1.5, isText: false },
-  { header: "Opportunities", question: "Opportunities you want to pursue at USAFA", label: "Opportunities", weight: 1.5, isText: false },
-  { header: "Research Interests", question: "In a sentence or two, what topics are you curious about?", label: "Research keywords", weight: 1.5, isText: true },
-  { header: "Minor", question: "Minor(s) you have or are considering", label: "Minor", weight: 1, isText: false },
+  { header: "Coaching Focus", question: "What do you want help with, or want your coach to focus on?", alt: "What do you want help with?", label: "Coaching focus", weight: 3, isText: false },
+  { header: "Major", question: "Major (if undeclared: majors you're considering)", alt: "Major (up to 3 if undecided)", label: "Major", weight: 3, isText: false },
+  { header: "Research Areas", question: "Research areas you're interested in", alt: "Research areas (up to 4)", label: "Research", weight: 3, isText: false },
+  { header: "Grad School Plans", question: "Grad school / fellowships you're interested in", alt: "Grad school interests", label: "Grad school", weight: 2, isText: false },
+  { header: "AF Career Interests", question: "Air Force / Space Force career fields you're interested in", alt: "Career fields you want (up to 4)", label: "AF/SF career", weight: 2, isText: false },
+  { header: "Fun", question: "What do you do for fun?", alt: "What do you do for fun?", label: "For fun", weight: 2, isText: false },
+  { header: "Future Path", question: "Long-term (after your commitment), where do you see yourself?", alt: "Long-term plans", label: "Future path", weight: 1.5, isText: false },
+  { header: "Opportunities", question: "Opportunities you want to pursue at USAFA", alt: "What do you want to do at USAFA?", label: "Opportunities", weight: 1.5, isText: false },
+  { header: "Research Interests", question: "In a sentence or two, what topics are you curious about?", alt: "What are you curious about?", label: "Research keywords", weight: 1.5, isText: true },
+  { header: "Minor", question: "Minor(s) you have or are considering", alt: "Minor", label: "Minor", weight: 1, isText: false },
 ];
 
 const DEFAULT_PAIRINGS: string[][] = [["2027", "2029"], ["2028", "2030"]];
@@ -116,13 +117,9 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
     });
   }
 
-  const now = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
-  if (!due) {
-    const on = settings.matchOn === null ? "the 'Match on' date (Settings!H5 is blank)" : dayText(settings.matchOn);
-    writeMatches(workbook, rows, `PREVIEW ONLY (updated ${now}) - nothing has been sent. Group chats are created on ${on}.`);
-    return [];
-  }
-  writeMatches(workbook, rows, `Group chats created ${now}.`);
+  // Before the date the Matches sheet is just a look at who would be paired; nothing is sent.
+  writeMatches(workbook, rows);
+  if (!due) return [];
   if (groups.length > 0) stampSent(workbook);
   return groups;
 }
@@ -145,6 +142,8 @@ interface Settings {
 function readSettings(workbook: ExcelScript.Workbook): Settings {
   let ws = workbook.getWorksheet(SETTINGS_SHEET);
   if (!ws) ws = createSettings(workbook);
+  // Older versions wrote an instruction sentence in A1; keep the sheet to labels and values only.
+  if (String(ws.getRange("A1").getValues()[0][0]).indexOf("Martinson coaching settings") === 0) ws.getRange("A1").setValue("");
 
   // Pairings: rows with the same coach class are merged.
   const byCoach = new Map<string, string[]>();
@@ -179,9 +178,6 @@ function readSettings(workbook: ExcelScript.Workbook): Settings {
 
 function createSettings(workbook: ExcelScript.Workbook): ExcelScript.Worksheet {
   const ws = workbook.addWorksheet(SETTINGS_SHEET);
-  ws.getRange("A1").setValue("Martinson coaching settings: change the yellow cells. The daily flow reads this sheet.");
-  ws.getRange("A1").getFormat().getFont().setBold(true);
-
   ws.getRange("A4:B4").setValues([["Coach class", "Coaches this class"]]);
   const pairs: string[][] = DEFAULT_PAIRINGS.map((p) => [p[0], p[1]]);
   while (pairs.length < 12) pairs.push(["", ""]);
@@ -218,13 +214,6 @@ function toDayNumber(v: string | number | boolean): number | null {
   return Math.floor(t / 86400000) + 25569;
 }
 
-// Excel day number -> "mm/dd/yyyy".
-function dayText(day: number): string {
-  const d = new Date((day - 25569) * 86400000);
-  const two = (n: number) => (n < 10 ? "0" : "") + n;
-  return `${two(d.getUTCMonth() + 1)}/${two(d.getUTCDate())}/${d.getUTCFullYear()}`;
-}
-
 // Today's date in Mountain time as an Excel day number (the service runs in UTC).
 function mountainToday(): number {
   return Math.floor((Date.now() - 7 * 3600000) / 86400000) + 25569;
@@ -249,7 +238,7 @@ function readPeople(table: ExcelScript.Table): Person[] {
   const emailCol = findColumn(headers, ["Email", "Responders' Email", "USAFA email"]);
   const classCol = findColumn(headers, ["Class year", "Class Year"]);
   if (emailCol < 0 || classCol < 0) throw new Error("Couldn't find the Email or Class year column.");
-  const fieldCols = FIELDS.map((f) => findColumn(headers, [f.header, f.question]));
+  const fieldCols = FIELDS.map((f) => findColumn(headers, [f.header, f.alt, f.question]));
 
   // Deduped by email: a later response replaces an earlier one.
   const byEmail = new Map<string, Person>();
@@ -463,15 +452,13 @@ function nameFromEmail(email: string): string {
   return local.split(/[._]/).filter((x) => x.length > 0).map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(" ");
 }
 
-function writeMatches(workbook: ExcelScript.Workbook, rows: (string | number)[][], status: string) {
+function writeMatches(workbook: ExcelScript.Workbook, rows: (string | number)[][]) {
   const old = workbook.getWorksheet(MATCHES_SHEET);
   if (old) old.delete();
   const ws = workbook.addWorksheet(MATCHES_SHEET);
-  ws.getRange("A1").setValue(status);
-  ws.getRange("A1").getFormat().getFont().setBold(true);
   const values: (string | number)[][] = [["Coach", "Coach Class", "Coach Email", "Coachee", "Coachee Class", "Coachee Email", "Score", "In common"]];
   for (const r of rows) values.push(r);
-  const range = ws.getRangeByIndexes(2, 0, values.length, values[0].length);
+  const range = ws.getRangeByIndexes(0, 0, values.length, values[0].length);
   range.setValues(values);
   range.getFormat().autofitColumns();
 }
