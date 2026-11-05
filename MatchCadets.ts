@@ -109,8 +109,7 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
         intro:
           `<p>Welcome to your Martinson Honors coaching group!</p>` +
           `<p><b>Coach:</b> ${co.name} (Class of ${co.cls})</p>` +
-          `<p><b>Coachee${mine.length === 1 ? "" : "s"}:</b><br>${lines.join("<br>")}</p>` +
-          `<p>${firstName(co.name)}, kick things off by setting up a time for everyone to meet this week.</p>`,
+          `<p><b>Coachee${mine.length === 1 ? "" : "s"}:</b><br>${lines.join("<br>")}</p>`,
       });
     });
   }
@@ -447,10 +446,6 @@ function classOf(raw: string): string {
 function nameFromEmail(email: string): string {
   const local = email.split("@")[0].replace(/^C\d{2}/i, "");
   return local.split(/[._]/).filter((x) => x.length > 0).map((x) => x.charAt(0).toUpperCase() + x.slice(1)).join(" ");
-}
-
-function firstName(name: string): string {
-  return name.split(/\s+/)[0];
 }
 
 function writeMatches(workbook: ExcelScript.Workbook, rows: (string | number)[][]) {
