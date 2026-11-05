@@ -63,7 +63,8 @@ const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the 
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
-  const force = (runNow || "").trim().toLowerCase() === "yes";
+  const force = String(runNow === undefined || runNow === null ? "" : runNow).trim().toLowerCase() === "yes";
+  console.log(`runNow=${JSON.stringify(runNow)} force=${force} matchOn=${settings.matchOn} today=${mountainToday()} sentAt=${settings.sentAt} pairings=${JSON.stringify(settings.pairings)}`);
 
   if (!force) {
     if (settings.matchOn === null) return [];
@@ -74,6 +75,7 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const responses = findResponsesTable(workbook);
   if (!responses) throw new Error("Couldn't find the form responses table in this workbook.");
   const people = readPeople(responses);
+  console.log(`responses=${people.length} classes=${people.map((p) => p.cls).join(",")}`);
 
   const groups: Group[] = [];
   const rows: (string | number)[][] = [];
@@ -103,7 +105,7 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
         coachClass: co.cls,
         coacheeCount: mine.length,
         memberEmails: [co.email].concat(mine.map((x) => x.ce.email)).join(";"),
-        chatTitle: `MHP Coaching: ${co.name}`,
+        chatTitle: `MHP Coaching - ${co.name}`.replace(/:/g, ""), // Teams rejects ':' in chat titles
         intro:
           `<p>Welcome to your Martinson Honors coaching group!</p>` +
           `<p><b>Coach:</b> ${co.name} (Class of ${co.cls})</p>` +
@@ -217,11 +219,13 @@ function mountainToday(): number {
 // ---------- responses ----------
 
 function findResponsesTable(workbook: ExcelScript.Workbook): ExcelScript.Table | undefined {
-  const tables = workbook.getTables().filter((t) => {
-    const name = t.getWorksheet().getName();
-    return name !== SETTINGS_SHEET && name !== MATCHES_SHEET;
-  });
-  return tables.length > 0 ? tables[0] : undefined;
+  // Plain loop: Office Scripts can't call workbook APIs inside array-method callbacks.
+  const tables = workbook.getTables();
+  for (let i = 0; i < tables.length; i++) {
+    const name = tables[i].getWorksheet().getName();
+    if (name !== SETTINGS_SHEET && name !== MATCHES_SHEET) return tables[i];
+  }
+  return undefined;
 }
 
 function readPeople(table: ExcelScript.Table): Person[] {

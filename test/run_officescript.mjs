@@ -88,6 +88,7 @@ check(g.filter((x: any) => x.coachClass === "2027").reduce((n: number, x: any) =
 check(g.filter((x: any) => x.coachClass === "2028").reduce((n: number, x: any) => n + x.coacheeCount, 0) === 11, "all 11 2030s go to the 3 2028 coaches");
 check(Math.max(...g.map((x: any) => x.coacheeCount)) - Math.min(...g.map((x: any) => x.coacheeCount)) <= 1, "loads are even (3-4 each)");
 check(g.every((x: any) => x.memberEmails.split(";").length === x.coacheeCount + 1), "chat members = coach + their coachees");
+check(g.every((x: any) => x.chatTitle.indexOf(":") < 0), "chat titles have no ':' (Teams rejects it)");
 check(String(settings().getRange("H7").getValues()[0][0]).length > 0, "run stamps 'Chats created at'");
 check(main(wb, "").length === 0, "second daily run does nothing (no duplicate chats)");
 check(main(wb, "yes").length === 6, "runNow=yes ignores the date/stamp (test runs)");

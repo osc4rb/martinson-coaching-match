@@ -60,11 +60,11 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
 - Rebuild Pages bundle after editing `site/`: `python build_site.py` (commit `docs/index.html` too)
 - Regenerate template/sample workbooks: `python build_files.py`
 - Match from a Forms export: `python run_match.py <responses.xlsx> [--coach 2028,2029] [--coachee 2030] [--out PATH]`
-- Tests (these three pass as of 2026-10-29):
+- Tests (these three pass as of 2026-11-05):
   - `node test/test_matcher.cjs` - matcher logic, Teams link, Hungarian optimality on random cases
   - `node test/test_forms_headers.cjs` - real Forms export headers map to fields
   - `node test/run_officescript.mjs` - runs MatchCadets.ts against a fake Forms-shaped workbook with a
-    simulated Settings sheet (13 checks: date gate, no duplicate runs, pairings, even loads, cap, weights)
+    simulated Settings sheet (16 checks: date gate, no duplicate runs, pairings, even loads, cap, weights)
 
 ## Conventions
 - Branch `main`; small descriptive commits. The owner (osc4rb) is the sole author and contributor:
@@ -96,6 +96,9 @@ by at most ceil(coachees/coaches). Default roles: youngest class is coached, eve
   (coach + all coachees). Weights/pairings/date are editable on the workbook's Settings sheet so the
   lead never edits code or the flow. Flow runs daily and acts only on/after the date, once.
 - 2026-11-05 Owner is the sole contributor: AI co-author trailers were stripped from all history.
+- 2026-11-05 Office Script rules learned from the live cloud run: never call workbook APIs inside
+  array callbacks (`.filter`/`.map` -> runtime `filterAsync is not a function`; use plain loops), and
+  never put `:` in Teams chat titles (Create a chat rejects it).
 - Power Automate flows are built in the classic designer - the new designer's side panel was unreliable.
 
 ## Do not touch
