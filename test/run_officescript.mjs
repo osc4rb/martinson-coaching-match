@@ -100,6 +100,7 @@ set("H6", "");
 settings().getRange("E5:E16").setValues([[0],[0],[0],[0],[0],[0],[0],[0],[0],[5],[""],[""]]);
 g = main(wb, "yes");
 check(g.length === 6 && g.every((x: any) => !/Coaching focus|Major:/.test(x.intro)), "weights from Settings are used (0 = ignored)");
+check(g.some((x: any) => x.coachName === "Jane Doe"), "Teams-style display name becomes 'Jane Doe' from the school email");
 console.log("\\nexample intro:\\n" + g[0].intro.replace(/<br>|<\\/p>/g, "\\n").replace(/<[^>]+>/g, "").replace(/&bull;/g, "-"));
 console.log(fails === 0 ? "\\nALL PASS" : "\\n" + fails + " FAILED");
 `;
