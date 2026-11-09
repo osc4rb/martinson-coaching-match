@@ -1,5 +1,5 @@
 # Handoff - martinson-matching
-Last updated: 2026-11-05 · Machine: C29-2MQ517152H (gov laptop) · Agent: Claude Code · Branch: main
+Last updated: 2026-11-09 · Machine: C29-2MQ517152H (gov laptop) · Agent: Claude Code · Branch: main
 
 Public repo: keep this file free of personal data, internal links, flow IDs and sign-in details.
 
@@ -13,7 +13,9 @@ match date (Tue 2026-11-17, flow fires daily ~1:30 PM Mountain) the flow matches
   intro without the "meet this week" line. Before the date each run refreshes the "Matches" sheet
   with the would-be pairs (plain table, no status text; nothing sent); on the date chats are created
   once and stamped.
-- Form questions shortened (live form verified via the forms API); script reads old + new headers.
+- Form renamed "MHP Coaching Matcher", no description, short question titles; Minor lists languages
+  (Arabic..Spanish); grad question is "Education goal" (Master's/PhD/Med/Law/Not sure/Not planning).
+  Script reads old + new headers. 2030s now have Teams accounts (as of 11/09).
 - Flow (scheduled, On, real Forms-synced workbook, runNow blank): Run script -> Apply to each ->
   Create a chat (members = memberEmails minus the flow owner, via expression) -> Post message.
 - Live tests: 1 coach + 1 coachee chat; 1 coach + 2 coachees with the flow owner as a coachee
