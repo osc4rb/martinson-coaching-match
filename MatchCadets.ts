@@ -66,6 +66,12 @@ const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the 
 // OVERRIDES: [coacheeEmail, newCoachEmail] moves a coachee; [coacheeEmail, ""] leaves them out.
 const APPROVED = false;
 const OVERRIDES: string[][] = [];
+// Standing requests, also set in the INSTALLED copy only (they name real people):
+// PINS: [coachee, coach] always paired. COACH_CAPS: [coach, max] = that coach's max coachees (pins count).
+// A person can be a full email or a piece of the email before "@" (e.g. "jane.doe"). A pinned coachee
+// who never filled out the form is still added if given as a full email.
+const PINS: string[][] = [];
+const COACH_CAPS: (string | number)[][] = [];
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -101,10 +107,21 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   for (const pairing of settings.pairings) {
     const coaches = people.filter((p) => pairing.coachClasses.indexOf(p.cls) >= 0);
     const coachees = people.filter((p) => pairing.coacheeClasses.indexOf(p.cls) >= 0 && !claimed.has(p.email.toLowerCase()));
+    // Pinned people who never filled out the form (given by full email) are still included: the
+    // coach joins this pairing if their email's class prefix (e.g. "C28") is a coach class here.
+    for (const pin of PINS) {
+      const coachId = String(pin[1] || "").trim();
+      if (coachId.indexOf("@") >= 0 && !findPerson(people, coachId) && pairing.coachClasses.indexOf(classFromEmail(coachId)) >= 0 && !findPerson(coaches, coachId))
+        coaches.push(placeholder(coachId, classFromEmail(coachId)));
+      const who = String(pin[0] || "").trim();
+      if (who.indexOf("@") < 0 || !findPerson(coaches, coachId)) continue;
+      if (findPerson(people, who) || findPerson(coachees, who) || claimed.has(who.toLowerCase())) continue;
+      coachees.push(placeholder(who, classFromEmail(who) || pairing.coacheeClasses[0]));
+    }
     if (coaches.length === 0 || coachees.length === 0) continue;
     coachees.forEach((c) => claimed.add(c.email.toLowerCase()));
 
-    const assignment = assign(coaches, coachees, settings.weights, settings.maxPerCoach);
+    const assignment = assign(coaches, coachees, settings.weights, settings.maxPerCoach, PINS, COACH_CAPS);
     coaches.forEach((co, j) => {
       const mine = coachees
         .map((ce, i) => ({ ce: ce, i: i }))
@@ -355,30 +372,81 @@ interface Assignment {
 
 // Every coach gets a coachee before anyone gets a second; nobody gets more than
 // maxPerCoach (or an even split when blank). Coachees beyond total capacity stay unmatched.
-function assign(coaches: Person[], coachees: Person[], weights: Map<string, number>, maxPerCoach: number): Assignment {
+// A person matches a full email exactly, or a piece of the email before "@".
+function personMatches(p: Person, id: string): boolean {
+  const k = id.trim().toLowerCase();
+  if (!k) return false;
+  const e = p.email.toLowerCase();
+  return k.indexOf("@") >= 0 ? e === k : e.split("@")[0].indexOf(k) >= 0;
+}
+
+// "C28First.Last@..." -> "2028" (USAFA school emails start with the class year).
+function classFromEmail(email: string): string {
+  const m = email.trim().match(/^c(\d{2})/i);
+  return m ? "20" + m[1] : "";
+}
+
+// Someone who never filled out the form: name from the email, no answers.
+function placeholder(email: string, cls: string): Person {
+  return { name: nameFromEmail(email), email: email, cls: cls, answers: FIELDS.map(() => new Map<string, string>()) };
+}
+
+function findPerson(list: Person[], id: string): Person | undefined {
+  for (const p of list) if (personMatches(p, id)) return p;
+  return undefined;
+}
+
+function assign(coaches: Person[], coachees: Person[], weights: Map<string, number>, maxPerCoach: number,
+  pins: string[][], caps: (string | number)[][]): Assignment {
   const score: number[][] = coachees.map((ce) => coaches.map((co) => similarity(ce, co, weights)));
-  const even = Math.ceil(coachees.length / coaches.length);
-  const cap = Math.max(1, maxPerCoach > 0 ? maxPerCoach : even);
+  // Pinned pairs are fixed up front and count toward that coach's limit.
+  const forced: number[] = coachees.map(() => -1);
+  for (const pin of pins) {
+    const i = coachees.findIndex((ce) => personMatches(ce, String(pin[0] || "")));
+    const j = coaches.findIndex((co) => personMatches(co, String(pin[1] || "")));
+    if (i >= 0 && j >= 0) forced[i] = j;
+  }
+  const pinned: number[] = coaches.map((_, j) => forced.filter((f) => f === j).length);
+  const limit: number[] = coaches.map((co, j) => {
+    let l = maxPerCoach > 0 ? maxPerCoach : Number.POSITIVE_INFINITY;
+    for (const c of caps) {
+      const n = Number(c[1]);
+      if (personMatches(co, String(c[0] || "")) && isFinite(n) && n >= 0) l = Math.min(l, n);
+    }
+    return Math.max(0, l - pinned[j]);
+  });
+  const free: number[] = [];
+  forced.forEach((f, i) => { if (f < 0) free.push(i); });
+  // Smallest even per-coach load that still fits everyone, given capped coaches.
+  let cap = Math.max(1, Math.ceil(free.length / Math.max(1, coaches.length)));
+  const room = (c: number) => limit.reduce((n, l) => n + Math.min(c, l), 0);
+  while (cap < free.length && room(cap) < free.length) cap++;
   const slotCoach: number[] = [];
   const slotRank: number[] = [];
   for (let k = 0; k < cap; k++) {
     for (let j = 0; j < coaches.length; j++) {
+      if (k >= limit[j]) continue;
       slotCoach.push(j);
-      slotRank.push(k);
+      slotRank.push(k + pinned[j]);
     }
   }
   // Filling earlier slots earns a bonus, which keeps loads even.
-  const bonus = (k: number) => 1000 * (cap - k);
+  const top = cap + Math.max(0, ...pinned);
+  const bonus = (k: number) => 1000 * (top - k);
   const nSlots = slotCoach.length;
-  // Hungarian needs rows <= cols; pad with "unmatched" columns when coachees outnumber slots.
-  const extra = Math.max(0, coachees.length - nSlots);
-  const cost: number[][] = coachees.map((_, i) => {
-    const row = slotCoach.map((j, s) => -(score[i][j] + bonus(slotRank[s])));
-    for (let e = 0; e < extra; e++) row.push(0);
-    return row;
-  });
-  const a = hungarian(cost);
-  return { coachOf: a.map((s) => (s >= 0 && s < nSlots ? slotCoach[s] : -1)), score: score };
+  const coachOf: number[] = forced.slice();
+  if (free.length > 0 && nSlots > 0) {
+    // Hungarian needs rows <= cols; pad with "unmatched" columns when coachees outnumber slots.
+    const extra = Math.max(0, free.length - nSlots);
+    const cost: number[][] = free.map((i) => {
+      const row = slotCoach.map((j, s) => -(score[i][j] + bonus(slotRank[s])));
+      for (let e = 0; e < extra; e++) row.push(0);
+      return row;
+    });
+    const a = hungarian(cost);
+    a.forEach((s, r) => { coachOf[free[r]] = s >= 0 && s < nSlots ? slotCoach[s] : -1; });
+  }
+  return { coachOf: coachOf, score: score };
 }
 
 function similarity(a: Person, b: Person, weights: Map<string, number>): number {

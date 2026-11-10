@@ -142,6 +142,33 @@ OVERRIDES.length = 0;
 Date.now = realNow;
 set("H8", "");
 
+// Standing requests: pin a pair and cap one coach; everyone else stays matched and even.
+{
+  set("H6", "");
+  const base = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const A = base[0].coachEmail, B = base[1];
+  const ceB = B.memberEmails.split(";")[1];
+  PINS.push([ceB, A]); COACH_CAPS.push([A.split("@")[0], 2]);
+  const g2 = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const gA = g2.find((x: any) => x.coachEmail === A);
+  const others = g2.filter((x: any) => x.coachEmail !== A).map((x: any) => x.coacheeCount);
+  check(gA.memberEmails.split(";").indexOf(ceB) > 0, "PINS: pinned coachee is with their coach");
+  check(gA.coacheeCount === 2, "COACH_CAPS: capped coach gets exactly the cap (2)");
+  check(g2.reduce((n: number, x: any) => n + x.coacheeCount, 0) === 11 && Math.max(...others) - Math.min(...others) <= 1, "caps: every 2030 still matched; other coaches stay even -> " + others.join(","));
+  PINS.push(["new.cadet@example.com", A]);
+  const g3 = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const gA3 = g3.find((x: any) => x.coachEmail === A);
+  check(gA3.memberEmails.indexOf("new.cadet@example.com") > 0 && gA3.coacheeCount === 2, "PINS: a pinned coachee who never filled the form is added (cap still holds)");
+  PINS.length = 0; COACH_CAPS.length = 0;
+  // Neither filled out the form: both given by school email -> their own group with the cap.
+  PINS.push(["C30Pat.Kim@example.com", "C28Lee.Ray@example.com"]); COACH_CAPS.push(["lee.ray", 4]);
+  const g4 = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const gL = g4.find((x: any) => x.coachEmail === "C28Lee.Ray@example.com");
+  check(!!gL && gL.memberEmails.indexOf("C30Pat.Kim@example.com") > 0 && gL.coacheeCount <= 4 && gL.coachName === "Lee Ray", "PINS: coach and coachee who never filled the form still get their group (cap 4)");
+  check(g4.reduce((n: number, x: any) => n + x.coacheeCount, 0) === 12, "PINS: all 11 real 2030s + the pinned one are matched");
+  PINS.length = 0; COACH_CAPS.length = 0;
+}
+
 // The live form was reworded to short titles; matching must not change.
 const shortTitle: Record<string, string> = {
   "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",
