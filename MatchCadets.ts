@@ -61,9 +61,11 @@ const FIELDS: Field[] = [
 
 const DEFAULT_PAIRINGS: string[][] = [["2027", "2029"], ["2028", "2030"]];
 const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the lead can change it there
-// Chats go out only from this time of day (Mountain) on the match date: 13:25, so the 13:30 run sends
-// and an earlier run that day (13:05, after the form closes at 13:00) is a review-only preview.
-const SEND_AT_MINUTES = 13 * 60 + 25;
+// Send switch + last-minute edits, set in the INSTALLED copy only on match day (never commit real emails):
+// APPROVED = true sends on the next run (same as typing YES in Settings!H8).
+// OVERRIDES: [coacheeEmail, newCoachEmail] moves a coachee; [coacheeEmail, ""] leaves them out.
+const APPROVED = false;
+const OVERRIDES: string[][] = [];
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -72,11 +74,9 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
 
   // Chats already created: leave the Matches sheet as the record of what was sent.
   if (!force && settings.sentAt) return [];
-  // "due" = create the chats now. Otherwise only refresh the Matches sheet as a preview.
-  // On the match day itself, runs before SEND_AT (e.g. the 13:05 review run) only refresh the preview.
-  const today = mountainToday();
-  const due = force || (settings.matchOn !== null &&
-    (today > settings.matchOn || (today === settings.matchOn && mountainMinutes() >= SEND_AT_MINUTES)));
+  // "due" = create the chats now: on/after the match date AND the lead typed YES in Settings!H8 after
+  // reviewing the Matches sheet. Otherwise only refresh the Matches sheet as a preview.
+  const due = force || (settings.matchOn !== null && mountainToday() >= settings.matchOn && settings.approved);
 
   const responses = findResponsesTable(workbook);
   if (!responses) {
@@ -84,7 +84,16 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
     throw new Error("Couldn't find the form responses table in this workbook.");
   }
   const people = readPeople(responses);
-  console.log(`responses=${people.length} classes=${people.map((p) => p.cls).join(",")}`);
+  console.log(`responses=${people.length} classes=${people.map((p) => p.cls).join(",")} approved=${settings.approved}`);
+
+  // Approved send: use the Matches sheet exactly as reviewed (and possibly edited) by the lead.
+  if (due && !force) {
+    const reviewed = groupsFromMatchesSheet(workbook, people, settings.weights);
+    if (reviewed.length > 0) {
+      stampSent(workbook);
+      return reviewed;
+    }
+  }
 
   const groups: Group[] = [];
   const rows: (string | number)[][] = [];
@@ -101,25 +110,13 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
         .map((ce, i) => ({ ce: ce, i: i }))
         .filter((x) => assignment.coachOf[x.i] === j);
       if (mine.length === 0) return;
-      const lines: string[] = [];
+      const list: CoacheeLine[] = [];
       for (const x of mine) {
-        const common = sharedItems(x.ce, co, settings.weights);
-        const commonText = common.length > 0 ? common.slice(0, 4).join(", ") : "a lot to talk about";
-        lines.push(`&bull; <b>${x.ce.name}</b> (Class of ${x.ce.cls}): in common with your coach: ${commonText}`);
+        const commonText = commonTextFor(x.ce, co, settings.weights);
+        list.push({ name: x.ce.name, cls: x.ce.cls, email: x.ce.email, common: commonText });
         rows.push([co.name, co.cls, co.email, x.ce.name, x.ce.cls, x.ce.email, Math.round(assignment.score[x.i][j]), commonText]);
       }
-      groups.push({
-        coachName: co.name,
-        coachEmail: co.email,
-        coachClass: co.cls,
-        coacheeCount: mine.length,
-        memberEmails: [co.email].concat(mine.map((x) => x.ce.email)).join(";"),
-        chatTitle: `MHP Coaching - ${co.name}`.replace(/:/g, ""), // Teams rejects ':' in chat titles
-        intro:
-          `<p>Welcome to your Martinson Honors coaching group!</p>` +
-          `<p><b>Coach:</b> ${co.name} (Class of ${co.cls})</p>` +
-          `<p><b>Coachee${mine.length === 1 ? "" : "s"}:</b><br>${lines.join("<br>")}</p>`,
-      });
+      groups.push(makeGroup(co.name, co.cls, co.email, list));
     });
   }
 
@@ -128,6 +125,78 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   if (!due) return [];
   if (groups.length > 0) stampSent(workbook);
   return groups;
+}
+
+interface CoacheeLine {
+  name: string;
+  cls: string;
+  email: string;
+  common: string;
+}
+
+function commonTextFor(a: Person, b: Person, weights: Map<string, number>): string {
+  const common = sharedItems(a, b, weights);
+  return common.length > 0 ? common.slice(0, 4).join(", ") : "a lot to talk about";
+}
+
+function makeGroup(coachName: string, coachClass: string, coachEmail: string, list: CoacheeLine[]): Group {
+  const lines = list.map((c) => `&bull; <b>${c.name}</b> (Class of ${c.cls}): in common with your coach: ${c.common}`);
+  return {
+    coachName: coachName,
+    coachEmail: coachEmail,
+    coachClass: coachClass,
+    coacheeCount: list.length,
+    memberEmails: [coachEmail].concat(list.map((c) => c.email)).join(";"),
+    chatTitle: `MHP Coaching - ${coachName}`.replace(/:/g, ""), // Teams rejects ':' in chat titles
+    intro:
+      `<p>Welcome to your Martinson Honors coaching group!</p>` +
+      `<p><b>Coach:</b> ${coachName} (Class of ${coachClass})</p>` +
+      `<p><b>Coachee${list.length === 1 ? "" : "s"}:</b><br>${lines.join("<br>")}</p>`,
+  };
+}
+
+// Groups built from the Matches sheet (columns: Coach, Coach Class, Coach Email, Coachee, Coachee Class,
+// Coachee Email, Score, In common). The lead may have edited it: moved a coachee to another coach
+// (changed Coach/Coach Email), deleted a row, or added one. Names/classes come from the form responses
+// when the email is found there, otherwise from the row.
+function groupsFromMatchesSheet(workbook: ExcelScript.Workbook, people: Person[], weights: Map<string, number>): Group[] {
+  const ws = workbook.getWorksheet(MATCHES_SHEET);
+  if (!ws) return [];
+  const byEmail = new Map<string, Person>();
+  for (const p of people) byEmail.set(p.email.toLowerCase(), p);
+  const values = ws.getRange("A2:H2000").getValues();
+  const pairs: { coach: string; coachee: string; row: (string | number | boolean)[] }[] = [];
+  for (const r of values) {
+    const coachEmail = String(r[2]).trim();
+    const coacheeEmail = String(r[5]).trim();
+    if (coachEmail && coacheeEmail) pairs.push({ coach: coachEmail, coachee: coacheeEmail, row: r });
+  }
+  for (const o of OVERRIDES) {
+    const who = String(o[0] || "").trim().toLowerCase();
+    const to = String(o[1] || "").trim();
+    const i = pairs.findIndex((x) => x.coachee.toLowerCase() === who);
+    if (!to) { if (i >= 0) pairs.splice(i, 1); continue; }
+    if (i >= 0) pairs[i] = { coach: to, coachee: pairs[i].coachee, row: ["", "", to, pairs[i].row[3], pairs[i].row[4], pairs[i].coachee, "", ""] };
+    else pairs.push({ coach: to, coachee: String(o[0]).trim(), row: ["", "", to, "", "", String(o[0]).trim(), "", ""] });
+  }
+  const order: string[] = [];
+  const coachOf = new Map<string, { name: string; cls: string; email: string; list: CoacheeLine[] }>();
+  for (const x of pairs) {
+    const r = x.row;
+    const co = byEmail.get(x.coach.toLowerCase());
+    const ce = byEmail.get(x.coachee.toLowerCase());
+    const key = x.coach.toLowerCase();
+    if (!coachOf.has(key)) {
+      order.push(key);
+      coachOf.set(key, { name: co ? co.name : String(r[0]).trim() || x.coach, cls: co ? co.cls : String(r[1]).trim(), email: x.coach, list: [] });
+    }
+    const common = co && ce ? commonTextFor(ce, co, weights) : String(r[7]).trim() || "a lot to talk about";
+    coachOf.get(key)!.list.push({ name: ce ? ce.name : String(r[3]).trim() || x.coachee, cls: ce ? ce.cls : String(r[4]).trim(), email: x.coachee, common: common });
+  }
+  return order.map((k) => {
+    const c = coachOf.get(k)!;
+    return makeGroup(c.name, c.cls, c.email, c.list);
+  });
 }
 
 // ---------- settings sheet ----------
@@ -143,6 +212,7 @@ interface Settings {
   matchOn: number | null;
   maxPerCoach: number;
   sentAt: string;
+  approved: boolean;
 }
 
 function readSettings(workbook: ExcelScript.Workbook): Settings {
@@ -171,7 +241,12 @@ function readSettings(workbook: ExcelScript.Workbook): Settings {
     if (label) weights.set(label, isFinite(w) && w >= 0 ? w : 0);
   }
 
-  const v = ws.getRange("H5:H7").getValues();
+  // Approval cell (added after the sheet was first created, so add its label if missing).
+  if (!String(ws.getRange("G8").getValues()[0][0]).trim()) {
+    ws.getRange("G8").setValue("Send chats? (type YES after reviewing Matches)");
+    ws.getRange("H8").getFormat().getFill().setColor("#FFF2CC");
+  }
+  const v = ws.getRange("H5:H8").getValues();
   const max = Number(v[1][0]);
   return {
     pairings: pairings,
@@ -179,6 +254,7 @@ function readSettings(workbook: ExcelScript.Workbook): Settings {
     matchOn: toDayNumber(v[0][0]),
     maxPerCoach: isFinite(max) && max >= 1 ? Math.floor(max) : 0,
     sentAt: String(v[2][0]).trim(),
+    approved: APPROVED || String(v[3][0]).trim().toLowerCase() === "yes",
   };
 }
 
@@ -225,10 +301,6 @@ function mountainToday(): number {
   return Math.floor((Date.now() - 7 * 3600000) / 86400000) + 25569;
 }
 
-// Minutes since midnight, Mountain time (UTC-7; the match is in November, standard time).
-function mountainMinutes(): number {
-  return Math.floor(((Date.now() - 7 * 3600000) % 86400000) / 60000);
-}
 
 // ---------- responses ----------
 

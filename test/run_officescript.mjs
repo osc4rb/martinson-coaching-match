@@ -85,6 +85,8 @@ check(!!mws() && String(mws().getRange("A1").getValues()[0][0]) === "Coach" && S
 check(String(settings().getRange("H7").getValues()[0][0]) === "", "preview does not stamp 'Chats created at'");
 
 set("H5", "2020-01-01");
+check(main(wb, "").length === 0, "past date but not approved (H8 blank): nothing sent");
+set("H8", "yes");
 g = main(wb, "");
 const loads = g.map((x: any) => x.coachClass + ":" + x.coacheeCount);
 check(g.length === 6, "past match date: one group chat per coach (6 coaches) -> " + loads.join(" "));
@@ -107,17 +109,38 @@ settings().getRange("E5:E16").setValues([[0],[0],[0],[0],[0],[0],[0],[0],[0],[5]
 g = main(wb, "yes");
 check(g.length === 6 && g.every((x: any) => !/Coaching focus|Major:/.test(x.intro)), "weights from Settings are used (0 = ignored)");
 check(g.some((x: any) => x.coachName === "Jane Doe"), "Teams-style display name becomes 'Jane Doe' from the school email");
-// Match day: 13:05 run (form closed at 13:00) is review-only; 13:30 run sends.
+// Match day: nothing is sent until the lead approves (Settings!H8 = YES); then the reviewed
+// (possibly edited) Matches sheet is what gets sent.
 const realNow = Date.now;
-set("H5", "11/17/2026"); set("H7", "");
-Date.now = () => Date.UTC(2026, 10, 17, 20, 5);   // 13:05 Mountain
-check(main(wb, "").length === 0 && String(mws().getRange("A2").getValues()[0][0]).length > 0 && String(settings().getRange("H7").getValues()[0][0]) === "", "match day 13:05: pairs shown on Matches, nothing sent, not stamped");
-Date.now = () => Date.UTC(2026, 10, 17, 20, 30);  // 13:30 Mountain
-check(main(wb, "").length === 6, "match day 13:30: chats are created");
-check(main(wb, "").length === 0, "match day 13:30 again: no duplicates");
-Date.now = () => Date.UTC(2026, 10, 18, 15, 0);   // next morning, already stamped
-check(main(wb, "").length === 0, "day after: nothing (already sent)");
+set("H5", "11/17/2026"); set("H7", ""); set("H8", "");
+Date.now = () => Date.UTC(2026, 10, 17, 20, 5);   // 13:05 Mountain on the match day
+check(main(wb, "").length === 0 && String(mws().getRange("A2").getValues()[0][0]).length > 0 && String(settings().getRange("H7").getValues()[0][0]) === "", "match day, not approved: pairs shown on Matches, nothing sent");
+check(String(settings().getRange("G8").getValues()[0][0]).indexOf("YES") > 0, "Settings has the 'Send chats? (type YES)' cell");
+// Lead edit in the sheet: move the coachee in row 2 to the coach of the last row; delete row 3.
+const lastRow = (() => { let r = 2; while (String(mws().getRange("C" + (r + 1)).getValues()[0][0])) r++; return r; })();
+const movedCoachee = String(mws().getRange("F2").getValues()[0][0]);
+const newCoach = String(mws().getRange("C" + lastRow).getValues()[0][0]);
+const droppedCoachee = String(mws().getRange("F3").getValues()[0][0]);
+mws().getRange("C2").setValue(newCoach);
+mws().getRange("C3").setValue(""); mws().getRange("F3").setValue("");
+set("H8", "yes");
+Date.now = () => Date.UTC(2026, 10, 17, 20, 30);
+let sent = main(wb, "");
+const total = (gs: any[]) => gs.reduce((n: number, x: any) => n + x.coacheeCount, 0);
+const holder = sent.find((x: any) => x.memberEmails.split(";").indexOf(movedCoachee) > 0);
+check(sent.length > 0 && !!holder && holder.coachEmail === newCoach, "approved: send uses the edited Matches sheet (coachee moved to the new coach)");
+check(sent.every((x: any) => x.memberEmails.split(";").indexOf(droppedCoachee) < 0) && total(sent) === 21, "approved: a deleted Matches row is left out (21 of 22 coachees sent)");
+check(main(wb, "").length === 0, "after sending: no duplicates");
+// Day-of edits via OVERRIDES (set in the installed copy): drop one coachee, move another.
+set("H7", "");
+const someCoachee = String(mws().getRange("F4").getValues()[0][0]);
+OVERRIDES.push([movedCoachee, ""], [someCoachee, newCoach]);
+sent = main(wb, "");
+check(sent.every((x: any) => x.memberEmails.split(";").indexOf(movedCoachee) < 0), "OVERRIDES: [coachee, blank] leaves that coachee out");
+check(sent.find((x: any) => x.coachEmail === newCoach)!.memberEmails.split(";").indexOf(someCoachee) > 0, "OVERRIDES: [coachee, coach] moves them to that coach");
+OVERRIDES.length = 0;
 Date.now = realNow;
+set("H8", "");
 
 // The live form was reworded to short titles; matching must not change.
 const shortTitle: Record<string, string> = {
