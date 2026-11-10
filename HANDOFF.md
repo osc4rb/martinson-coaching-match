@@ -32,10 +32,9 @@ match date (Tue 2026-11-17, flow fires daily ~1:30 PM Mountain) the flow matches
    APPROVED=true in the INSTALLED script (or Settings!H8 = YES) AND date >= 11/17. The send uses the
    Matches sheet as reviewed; OVERRIDES [[coacheeEmail, newCoachEmail or ""]] in the installed copy
    apply the lead's edits. Never commit real emails/APPROVED=true to the repo.
-   STILL TODO (needs owner signed in to Microsoft in the browser pane):
-   b. Flow Recurrence: add 13:05 next to 13:30 (classic designer ?v3=false, "At these minutes" 5,30).
-   c. Forms: end date 11/17/2026 1:00 PM.
-   d. A flow Test run before 11/17 (sends nothing) to confirm the installed script runs in the cloud.
+   DONE 2026-11-10: flow Recurrence = daily 13:05 MT (preview only unless approved); form End date =
+   2026-11-17 13:00 MT (verified via forms API EndTime 20:00Z); cloud test run OK (25 responses then:
+   2027x2, 2028x3, 2029x6, 2030x14 -> 20 pairs, nothing sent).
 2. On 11/17 ~13:05 the owner asks the agent: read Matches from the synced workbook (OneDrive root, read-only),
    owner says edits -> agent installs script with OVERRIDES + APPROVED=true -> run flow (Test->Run flow) -> chats sent.
    (old: the owner reviews pairs (Matches tab, or ask the agent to read the synced
