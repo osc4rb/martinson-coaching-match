@@ -61,6 +61,9 @@ const FIELDS: Field[] = [
 
 const DEFAULT_PAIRINGS: string[][] = [["2027", "2029"], ["2028", "2030"]];
 const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the lead can change it there
+// Chats go out only from this time of day (Mountain) on the match date: 13:25, so the 13:30 run sends
+// and an earlier run that day (13:05, after the form closes at 13:00) is a review-only preview.
+const SEND_AT_MINUTES = 13 * 60 + 25;
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -70,7 +73,10 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   // Chats already created: leave the Matches sheet as the record of what was sent.
   if (!force && settings.sentAt) return [];
   // "due" = create the chats now. Otherwise only refresh the Matches sheet as a preview.
-  const due = force || (settings.matchOn !== null && mountainToday() >= settings.matchOn);
+  // On the match day itself, runs before SEND_AT (e.g. the 13:05 review run) only refresh the preview.
+  const today = mountainToday();
+  const due = force || (settings.matchOn !== null &&
+    (today > settings.matchOn || (today === settings.matchOn && mountainMinutes() >= SEND_AT_MINUTES)));
 
   const responses = findResponsesTable(workbook);
   if (!responses) {
@@ -217,6 +223,11 @@ function toDayNumber(v: string | number | boolean): number | null {
 // Today's date in Mountain time as an Excel day number (the service runs in UTC).
 function mountainToday(): number {
   return Math.floor((Date.now() - 7 * 3600000) / 86400000) + 25569;
+}
+
+// Minutes since midnight, Mountain time (UTC-7; the match is in November, standard time).
+function mountainMinutes(): number {
+  return Math.floor(((Date.now() - 7 * 3600000) % 86400000) / 60000);
 }
 
 // ---------- responses ----------

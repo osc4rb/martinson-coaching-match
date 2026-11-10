@@ -107,6 +107,18 @@ settings().getRange("E5:E16").setValues([[0],[0],[0],[0],[0],[0],[0],[0],[0],[5]
 g = main(wb, "yes");
 check(g.length === 6 && g.every((x: any) => !/Coaching focus|Major:/.test(x.intro)), "weights from Settings are used (0 = ignored)");
 check(g.some((x: any) => x.coachName === "Jane Doe"), "Teams-style display name becomes 'Jane Doe' from the school email");
+// Match day: 13:05 run (form closed at 13:00) is review-only; 13:30 run sends.
+const realNow = Date.now;
+set("H5", "11/17/2026"); set("H7", "");
+Date.now = () => Date.UTC(2026, 10, 17, 20, 5);   // 13:05 Mountain
+check(main(wb, "").length === 0 && String(mws().getRange("A2").getValues()[0][0]).length > 0 && String(settings().getRange("H7").getValues()[0][0]) === "", "match day 13:05: pairs shown on Matches, nothing sent, not stamped");
+Date.now = () => Date.UTC(2026, 10, 17, 20, 30);  // 13:30 Mountain
+check(main(wb, "").length === 6, "match day 13:30: chats are created");
+check(main(wb, "").length === 0, "match day 13:30 again: no duplicates");
+Date.now = () => Date.UTC(2026, 10, 18, 15, 0);   // next morning, already stamped
+check(main(wb, "").length === 0, "day after: nothing (already sent)");
+Date.now = realNow;
+
 // The live form was reworded to short titles; matching must not change.
 const shortTitle: Record<string, string> = {
   "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",
