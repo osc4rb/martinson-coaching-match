@@ -72,6 +72,10 @@ const OVERRIDES: string[][] = [];
 // who never filled out the form is still added if given as a full email.
 const PINS: string[][] = [];
 const COACH_CAPS: (string | number)[][] = [];
+// EXTRA_PEOPLE: school emails of people who never filled out the form but should be matched (their
+// class comes from the email, e.g. "C30..."). EXCLUDE: people to leave out entirely.
+const EXTRA_PEOPLE: string[] = [];
+const EXCLUDE: string[] = [];
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -80,16 +84,21 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
 
   // Chats already created: leave the Matches sheet as the record of what was sent.
   if (!force && settings.sentAt) return [];
-  // "due" = create the chats now: on/after the match date AND the lead typed YES in Settings!H8 after
-  // reviewing the Matches sheet. Otherwise only refresh the Matches sheet as a preview.
-  const due = force || (settings.matchOn !== null && mountainToday() >= settings.matchOn && settings.approved);
+  // "due" = create the chats now: only when the lead gave the go-ahead (APPROVED in the installed copy,
+  // or YES in Settings!H8) after reviewing the Matches sheet. Otherwise only refresh Matches.
+  const due = force || settings.approved;
 
   const responses = findResponsesTable(workbook);
   if (!responses) {
     if (!due) return [];
     throw new Error("Couldn't find the form responses table in this workbook.");
   }
-  const people = readPeople(responses);
+  const people = readPeople(responses).filter((p) => !EXCLUDE.some((x) => personMatches(p, x)));
+  for (const e of EXTRA_PEOPLE) {
+    const email = String(e || "").trim();
+    if (email.indexOf("@") < 0 || !classFromEmail(email) || findPerson(people, email) || EXCLUDE.some((x) => email.toLowerCase().indexOf(x.toLowerCase()) >= 0)) continue;
+    people.push(placeholder(email, classFromEmail(email)));
+  }
   console.log(`responses=${people.length} classes=${people.map((p) => p.cls).join(",")} approved=${settings.approved}`);
 
   // Approved send: use the Matches sheet exactly as reviewed (and possibly edited) by the lead.

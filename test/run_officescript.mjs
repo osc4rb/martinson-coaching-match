@@ -167,6 +167,15 @@ set("H8", "");
   check(!!gL && gL.memberEmails.indexOf("C30Pat.Kim@example.com") > 0 && gL.coacheeCount <= 4 && gL.coachName === "Lee Ray", "PINS: coach and coachee who never filled the form still get their group (cap 4)");
   check(g4.reduce((n: number, x: any) => n + x.coacheeCount, 0) === 12, "PINS: all 11 real 2030s + the pinned one are matched");
   PINS.length = 0; COACH_CAPS.length = 0;
+  // Add someone who skipped the form; remove someone who did. Everyone else re-balances.
+  const before5 = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const gone = before5[0].memberEmails.split(";")[1];
+  EXTRA_PEOPLE.push("C30New.Person@example.com"); EXCLUDE.push(gone);
+  const g5 = main(wb, "yes").filter((x: any) => x.coachClass === "2028");
+  const all5 = g5.map((x: any) => x.memberEmails).join(";");
+  const loads5 = g5.map((x: any) => x.coacheeCount);
+  check(all5.indexOf("C30New.Person@example.com") > 0 && all5.indexOf(gone) < 0 && Math.max(...loads5) - Math.min(...loads5) <= 1, "EXTRA_PEOPLE added, EXCLUDE removed, loads stay even -> " + loads5.join(","));
+  EXTRA_PEOPLE.length = 0; EXCLUDE.length = 0;
 }
 
 // The live form was reworded to short titles; matching must not change.
