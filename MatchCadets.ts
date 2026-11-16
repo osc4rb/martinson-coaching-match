@@ -65,6 +65,9 @@ const DEFAULT_MATCH_ON = "11/17/2026"; // pre-filled on the Settings sheet; the 
 // APPROVED = true sends on the next run (same as typing YES in Settings!H8).
 // OVERRIDES: [coacheeEmail, newCoachEmail] moves a coachee; [coacheeEmail, ""] leaves them out.
 const APPROVED = false;
+// PREVIEW_ONLY = true in the copy installed as "MatchPreview" (run on every new form response): it only
+// refreshes the Matches sheet and can never send or stamp, whatever APPROVED says.
+const PREVIEW_ONLY = false;
 const OVERRIDES: string[][] = [];
 // Standing requests, also set in the INSTALLED copy only (they name real people):
 // PINS: [coachee, coach] always paired. COACH_CAPS: [coach, max] = that coach's max coachees (pins count).
@@ -86,7 +89,7 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   if (!force && settings.sentAt) return [];
   // "due" = create the chats now: only when the lead gave the go-ahead (APPROVED in the installed copy,
   // or YES in Settings!H8) after reviewing the Matches sheet. Otherwise only refresh Matches.
-  const due = force || settings.approved;
+  const due = !PREVIEW_ONLY && (force || settings.approved);
 
   const responses = findResponsesTable(workbook);
   if (!responses) {
