@@ -86,6 +86,8 @@ const EXTRA_PEOPLE: string[] = [];
 const EXCLUDE: string[] = [];
 // LIVE_QUESTIONS: [questionId, question title] for decoding live JSON rows (set in the installed copy).
 const LIVE_QUESTIONS: string[][] = [];
+// WEIGHTS: [question label, weight] overrides the Settings sheet (labels as in Settings!D5:D16).
+const WEIGHTS: (string | number)[][] = [];
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -275,6 +277,10 @@ function readSettings(workbook: ExcelScript.Workbook): Settings {
     const label = String(r[0]).trim();
     const w = Number(r[1]);
     if (label) weights.set(label, isFinite(w) && w >= 0 ? w : 0);
+  }
+  for (const o of WEIGHTS) {
+    const w = Number(o[1]);
+    if (String(o[0] || "").trim() && isFinite(w) && w >= 0) weights.set(String(o[0]).trim(), w);
   }
 
   // Approval cell (added after the sheet was first created, so add its label if missing).

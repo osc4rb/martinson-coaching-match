@@ -195,6 +195,10 @@ set("H8", "");
   liveRowsData.length = 0; LIVE_QUESTIONS.length = 0;
 }
 
+WEIGHTS.push(["Minor", 2]);
+check(readSettings(wb).weights.get("Minor") === 2, "WEIGHTS: override beats the Settings sheet value");
+WEIGHTS.length = 0;
+
 // The live form was reworded to short titles; matching must not change.
 const shortTitle: Record<string, string> = {
   "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",
