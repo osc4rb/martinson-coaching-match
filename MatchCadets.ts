@@ -44,6 +44,11 @@ interface Person {
 
 const SETTINGS_SHEET = "Settings";
 const MATCHES_SHEET = "Matches";
+// Microsoft's Forms->workbook sync only runs when someone opens the workbook, so the per-response flow
+// also appends each response's raw JSON ("Get response details" body) to this table. Read together
+// with the synced table (deduped by email), the matching is always current.
+const LIVE_SHEET = "Live";
+const LIVE_TABLE = "LiveResponses";
 
 // header = short column name; alt = current form question text; question = older form wording.
 const FIELDS: Field[] = [
@@ -79,6 +84,8 @@ const COACH_CAPS: (string | number)[][] = [];
 // class comes from the email, e.g. "C30..."). EXCLUDE: people to leave out entirely.
 const EXTRA_PEOPLE: string[] = [];
 const EXCLUDE: string[] = [];
+// LIVE_QUESTIONS: [questionId, question title] for decoding live JSON rows (set in the installed copy).
+const LIVE_QUESTIONS: string[][] = [];
 
 function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
   const settings = readSettings(workbook);
@@ -96,7 +103,7 @@ function main(workbook: ExcelScript.Workbook, runNow?: string): Group[] {
     if (!due) return [];
     throw new Error("Couldn't find the form responses table in this workbook.");
   }
-  const people = readPeople(responses).filter((p) => !EXCLUDE.some((x) => personMatches(p, x)));
+  const people = readPeople(responses, liveRows(workbook, responses)).filter((p) => !EXCLUDE.some((x) => personMatches(p, x)));
   for (const e of EXTRA_PEOPLE) {
     const email = String(e || "").trim();
     if (email.indexOf("@") < 0 || !classFromEmail(email) || findPerson(people, email) || EXCLUDE.some((x) => email.toLowerCase().indexOf(x.toLowerCase()) >= 0)) continue;
@@ -338,14 +345,43 @@ function findResponsesTable(workbook: ExcelScript.Workbook): ExcelScript.Table |
   const tables = workbook.getTables();
   for (let i = 0; i < tables.length; i++) {
     const name = tables[i].getWorksheet().getName();
-    if (name !== SETTINGS_SHEET && name !== MATCHES_SHEET) return tables[i];
+    if (name !== SETTINGS_SHEET && name !== MATCHES_SHEET && name !== LIVE_SHEET) return tables[i];
   }
   return undefined;
 }
 
-function readPeople(table: ExcelScript.Table): Person[] {
+// Live JSON rows turned into rows shaped like the synced table (same column order).
+function liveRows(workbook: ExcelScript.Workbook, table: ExcelScript.Table): (string | number | boolean)[][] {
+  let live = workbook.getTable(LIVE_TABLE);
+  if (!live) {
+    let ws = workbook.getWorksheet(LIVE_SHEET);
+    if (!ws) ws = workbook.addWorksheet(LIVE_SHEET);
+    ws.getRange("A1").setValue("Json");
+    live = ws.addTable("A1:A2", true);
+    live.setName(LIVE_TABLE);
+  }
   const headers = table.getHeaderRowRange().getValues()[0].map((h) => String(h));
-  const rows = table.getRangeBetweenHeaderAndTotal().getValues();
+  const emailCol = findColumn(headers, ["Email", "Responders' Email", "USAFA email"]);
+  const out: (string | number | boolean)[][] = [];
+  for (const r of live.getRangeBetweenHeaderAndTotal().getValues()) {
+    const raw = String(r[0] || "").trim();
+    if (!raw) continue;
+    let j: { [k: string]: string } = {};
+    try { j = JSON.parse(raw) as { [k: string]: string }; } catch (e) { continue; }
+    const row: (string | number | boolean)[] = headers.map(() => "");
+    if (emailCol >= 0) row[emailCol] = String(j["responder"] || "");
+    for (const q of LIVE_QUESTIONS) {
+      const c = findColumn(headers, [q[1]]);
+      if (c >= 0 && j[q[0]] !== undefined) row[c] = String(j[q[0]]);
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+function readPeople(table: ExcelScript.Table, extra?: (string | number | boolean)[][]): Person[] {
+  const headers = table.getHeaderRowRange().getValues()[0].map((h) => String(h));
+  const rows = table.getRangeBetweenHeaderAndTotal().getValues().concat(extra || []);
   const nameCol = findColumn(headers, ["Name", "Full name"]);
   const emailCol = findColumn(headers, ["Email", "Responders' Email", "USAFA email"]);
   const classCol = findColumn(headers, ["Class year", "Class Year"]);

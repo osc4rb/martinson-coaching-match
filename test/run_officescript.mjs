@@ -63,9 +63,12 @@ const sheets = new Map<string, any>();
 const formSheet = makeSheet("Form1"); sheets.set("Form1", formSheet);
 const wb: any = {
   getTables: () => [{ getWorksheet: () => formSheet, getHeaderRowRange: () => ({ getValues: () => [headers] }), getRangeBetweenHeaderAndTotal: () => ({ getValues: () => rows }) }],
+  getTable: (n: string) => (n === "LiveResponses" ? liveTable : undefined),
   getWorksheet: (n: string) => sheets.get(n),
   addWorksheet: (n: string) => { const w = makeSheet(n); sheets.set(n, w); return w; },
 };
+const liveRowsData: any[][] = [];
+const liveTable = { getRangeBetweenHeaderAndTotal: () => ({ getValues: () => liveRowsData }) };
 const settings = () => sheets.get("Settings");
 const set = (addr: string, v: any) => settings().getRange(addr).setValue(v);
 let fails = 0;
@@ -176,6 +179,20 @@ set("H8", "");
   const loads5 = g5.map((x: any) => x.coacheeCount);
   check(all5.indexOf("C30New.Person@example.com") > 0 && all5.indexOf(gone) < 0 && Math.max(...loads5) - Math.min(...loads5) <= 1, "EXTRA_PEOPLE added, EXCLUDE removed, loads stay even -> " + loads5.join(","));
   EXTRA_PEOPLE.length = 0; EXCLUDE.length = 0;
+}
+
+// Live rows: a response the Forms->workbook sync hasn't delivered yet still gets matched.
+{
+  const classHeader = headers.find((h: string) => h === "Class year")!;
+  LIVE_QUESTIONS.push(["qClass", classHeader]);
+  liveRowsData.push([JSON.stringify({ responder: "C30Live.Person@example.com", qClass: "2030" })], [""], ["not json"]);
+  const gl = main(wb, "yes");
+  check(gl.some((x: any) => x.memberEmails.indexOf("C30Live.Person@example.com") > 0), "LIVE: a response only in the Live table is matched (blank/bad rows ignored)");
+  const firstEmail = rows[1][3];
+  liveRowsData.push([JSON.stringify({ responder: firstEmail, qClass: String(rows[1][classIdx + 6]) })]);
+  const gl2 = main(wb, "yes");
+  check(gl2.reduce((n: number, x: any) => n + x.memberEmails.split(";").filter((e: string) => e === firstEmail).length, 0) === 1, "LIVE: someone in both the synced table and Live is counted once");
+  liveRowsData.length = 0; LIVE_QUESTIONS.length = 0;
 }
 
 // The live form was reworded to short titles; matching must not change.
