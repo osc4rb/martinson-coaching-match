@@ -199,6 +199,14 @@ WEIGHTS.push(["Minor", 2]);
 check(readSettings(wb).weights.get("Minor") === 2, "WEIGHTS: override beats the Settings sheet value");
 WEIGHTS.length = 0;
 
+{
+  const mk = (xs: string[]) => new Map(xs.map((x) => [x.toLowerCase(), x]));
+  const P = (minor: string[]): any => ({ name: "x", email: "x", cls: "2029", answers: FIELDS.map((f) => f.label === "Minor" ? mk(minor) : new Map()) });
+  const w = new Map<string, number>([["Minor", 2]]);
+  check(similarity(P(["None / undecided"]), P(["None / undecided"]), w) === 0 && similarity(P(["Other"]), P(["Other"]), w) === 0, "SCORING: shared None/undecided or Other earns nothing");
+  check(similarity(P(["Chinese"]), P(["Chinese"]), w) > 0, "SCORING: a shared real minor still counts");
+}
+
 // The live form was reworded to short titles; matching must not change.
 const shortTitle: Record<string, string> = {
   "What do you want help with, or want your coach to focus on? (pick up to 5)": "What do you want help with? (up to 5)",

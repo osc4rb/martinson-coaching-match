@@ -80,6 +80,7 @@
   }
 
   const isNone = (k) => /^(none|n\/a|not sure|not interested|not planning|undecided|no|other)\b/.test(k);
+  const real = (m) => new Map([...m].filter(([k]) => !isNone(k)));
 
   function similarity(a, b, weights) {
     let total = 0, wsum = 0;
@@ -87,7 +88,8 @@
       const w = weights[f.key];
       if (!(w > 0)) return;
       wsum += w;
-      total += w * jaccard(a.answers[k], b.answers[k]);
+      // "None / undecided", "Other", "Not sure yet"... are not common ground: they don't score.
+      total += w * jaccard(real(a.answers[k]), real(b.answers[k]));
     });
     return wsum ? (100 * total) / wsum : 0;
   }

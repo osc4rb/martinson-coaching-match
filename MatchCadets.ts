@@ -510,7 +510,8 @@ function similarity(a: Person, b: Person, weights: Map<string, number>): number 
     const w = weights.has(f.label) ? (weights.get(f.label) as number) : f.weight;
     if (w <= 0) return;
     wsum += w;
-    total += w * jaccard(a.answers[k], b.answers[k]);
+    // "None / undecided", "Other", "Not sure yet"... are not common ground: they don't score.
+    total += w * jaccard(realAnswers(a.answers[k]), realAnswers(b.answers[k]));
   });
   return wsum === 0 ? 0 : (100 * total) / wsum;
 }
@@ -533,6 +534,12 @@ function sharedItems(a: Person, b: Person, weights: Map<string, number>): string
       if (b.answers[k].has(key) && !isNone(key) && out.indexOf(display) < 0) out.push(display);
     });
   });
+  return out;
+}
+
+function realAnswers(m: Map<string, string>): Map<string, string> {
+  const out = new Map<string, string>();
+  m.forEach((v, k) => { if (!isNone(k)) out.set(k, v); });
   return out;
 }
 
