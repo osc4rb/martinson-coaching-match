@@ -3,26 +3,6 @@
 Pairs Martinson Honors coaches with coachees for the semester from a survey. Any class can sign up, and
 the program lead picks which classes coach and which get coached.
 
-**Live matcher:** https://osc4rb.github.io/martinson-coaching-match/
-
-## How it works
-
-```
-Microsoft Form (USAFA accounts only)
-      │  Responses → Open in Excel → download
-      ▼
-Matcher website (GitHub Pages; runs in your browser, nothing uploaded)
-      │  pick Coach / Coachee / Skip per class, review pairs, swap by hand,
-      │  edit the intro message, Download Matches.xlsx
-      ▼
-OneDrive: Martinson Coaching Match/Matches.xlsx   (overwrite the placeholder)
-      │
-      ▼
-Power Automate "Martinson: send coach intro links" (run manually)
-      each coach gets a Teams message from Workflows with a link that opens a chat to
-      their coachee, intro already typed. The coach hits Send, so the message comes from them.
-```
-
 ## Each semester
 
 1. Share the form (Forms → Collect responses) with the classes taking part.
